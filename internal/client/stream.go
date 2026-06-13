@@ -13,10 +13,10 @@ type Stream struct {
 	IncomingPort   int                    `json:"incoming_port"`
 	ForwardingHost string                 `json:"forwarding_host"`
 	ForwardingPort int                    `json:"forwarding_port"`
-	TCPForwarding  bool                   `json:"tcp_forwarding"`
-	UDPForwarding  bool                   `json:"udp_forwarding"`
+	TCPForwarding  Bool                   `json:"tcp_forwarding"`
+	UDPForwarding  Bool                   `json:"udp_forwarding"`
 	CertificateID  interface{}            `json:"certificate_id"`
-	Enabled        bool                   `json:"enabled"`
+	Enabled        Bool                   `json:"enabled"`
 	Meta           map[string]interface{} `json:"meta"`
 }
 

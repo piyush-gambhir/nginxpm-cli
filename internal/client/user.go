@@ -7,16 +7,16 @@ import (
 )
 
 type User struct {
-	ID          int              `json:"id"`
-	CreatedOn   string           `json:"created_on"`
-	ModifiedOn  string           `json:"modified_on"`
-	Name        string           `json:"name"`
-	Nickname    string           `json:"nickname"`
-	Email       string           `json:"email"`
-	Avatar      string           `json:"avatar"`
-	IsDisabled  bool             `json:"is_disabled"`
-	Roles       []string         `json:"roles"`
-	Permissions json.RawMessage  `json:"permissions"`
+	ID          int             `json:"id"`
+	CreatedOn   string          `json:"created_on"`
+	ModifiedOn  string          `json:"modified_on"`
+	Name        string          `json:"name"`
+	Nickname    string          `json:"nickname"`
+	Email       string          `json:"email"`
+	Avatar      string          `json:"avatar"`
+	IsDisabled  Bool            `json:"is_disabled"`
+	Roles       []string        `json:"roles"`
+	Permissions json.RawMessage `json:"permissions"`
 }
 
 func (c *Client) ListUsers(ctx context.Context) ([]User, error) {

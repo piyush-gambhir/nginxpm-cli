@@ -16,15 +16,15 @@ type ProxyHost struct {
 	ForwardScheme         string                 `json:"forward_scheme"`
 	AccessListID          int                    `json:"access_list_id"`
 	CertificateID         interface{}            `json:"certificate_id"` // int or "new"
-	SSLForced             bool                   `json:"ssl_forced"`
-	HSTSEnabled           bool                   `json:"hsts_enabled"`
-	HSTSSubdomains        bool                   `json:"hsts_subdomains"`
-	HTTP2Support          bool                   `json:"http2_support"`
-	BlockExploits         bool                   `json:"block_exploits"`
-	CachingEnabled        bool                   `json:"caching_enabled"`
-	AllowWebsocketUpgrade bool                   `json:"allow_websocket_upgrade"`
+	SSLForced             Bool                   `json:"ssl_forced"`
+	HSTSEnabled           Bool                   `json:"hsts_enabled"`
+	HSTSSubdomains        Bool                   `json:"hsts_subdomains"`
+	HTTP2Support          Bool                   `json:"http2_support"`
+	BlockExploits         Bool                   `json:"block_exploits"`
+	CachingEnabled        Bool                   `json:"caching_enabled"`
+	AllowWebsocketUpgrade Bool                   `json:"allow_websocket_upgrade"`
 	AdvancedConfig        string                 `json:"advanced_config"`
-	Enabled               bool                   `json:"enabled"`
+	Enabled               Bool                   `json:"enabled"`
 	Meta                  map[string]interface{} `json:"meta"`
 	Locations             []ProxyLocation        `json:"locations"`
 }

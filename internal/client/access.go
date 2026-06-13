@@ -12,8 +12,8 @@ type AccessList struct {
 	ModifiedOn  string                 `json:"modified_on"`
 	OwnerUserID int                    `json:"owner_user_id"`
 	Name        string                 `json:"name"`
-	SatisfyAny  bool                   `json:"satisfy_any"`
-	PassAuth    bool                   `json:"pass_auth"`
+	SatisfyAny  Bool                   `json:"satisfy_any"`
+	PassAuth    Bool                   `json:"pass_auth"`
 	Items       json.RawMessage        `json:"items"`
 	Clients     json.RawMessage        `json:"clients"`
 	Meta        map[string]interface{} `json:"meta"`

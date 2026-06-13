@@ -5,7 +5,32 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 )
+
+// Bool is a bool that tolerates the different encodings used by the
+// Nginx Proxy Manager API. NPM releases before v2.12.0 return database
+// boolean columns as JSON numbers (0/1); newer releases return real
+// booleans. Bool accepts true/false, 0/1, "0"/"1"/"true"/"false", and null.
+type Bool bool
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (b *Bool) UnmarshalJSON(data []byte) error {
+	s := strings.TrimSpace(string(data))
+	// Unwrap string-encoded values like "1" or "true".
+	if len(s) >= 2 && s[0] == '"' && s[len(s)-1] == '"' {
+		s = s[1 : len(s)-1]
+	}
+	switch s {
+	case "true", "1":
+		*b = true
+	case "false", "0", "null", "":
+		*b = false
+	default:
+		return fmt.Errorf("cannot unmarshal %s into bool", string(data))
+	}
+	return nil
+}
 
 // Response wraps an http.Response with convenience methods.
 type Response struct {

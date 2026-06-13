@@ -104,9 +104,9 @@ func newRootCmd() *cobra.Command {
 	var updateResult chan *update.UpdateInfo
 
 	rootCmd := &cobra.Command{
-		Use:   "nginxpm",
-		Short: "Nginx Proxy Manager CLI - manage Nginx Proxy Manager from the command line",
-		Long:  "A command-line interface for managing Nginx Proxy Manager proxy hosts, redirections, streams, certificates, and more.",
+		Use:           "nginxpm",
+		Short:         "Nginx Proxy Manager CLI - manage Nginx Proxy Manager from the command line",
+		Long:          "A command-line interface for managing Nginx Proxy Manager proxy hosts, redirections, streams, certificates, and more.",
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {

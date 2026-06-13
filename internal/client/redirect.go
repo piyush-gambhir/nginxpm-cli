@@ -14,15 +14,15 @@ type RedirectHost struct {
 	ForwardScheme     string                 `json:"forward_scheme"`
 	ForwardHTTPCode   int                    `json:"forward_http_code"`
 	ForwardDomainName string                 `json:"forward_domain_name"`
-	PreservePath      bool                   `json:"preserve_path"`
+	PreservePath      Bool                   `json:"preserve_path"`
 	CertificateID     interface{}            `json:"certificate_id"`
-	SSLForced         bool                   `json:"ssl_forced"`
-	HSTSEnabled       bool                   `json:"hsts_enabled"`
-	HSTSSubdomains    bool                   `json:"hsts_subdomains"`
-	HTTP2Support      bool                   `json:"http2_support"`
-	BlockExploits     bool                   `json:"block_exploits"`
+	SSLForced         Bool                   `json:"ssl_forced"`
+	HSTSEnabled       Bool                   `json:"hsts_enabled"`
+	HSTSSubdomains    Bool                   `json:"hsts_subdomains"`
+	HTTP2Support      Bool                   `json:"http2_support"`
+	BlockExploits     Bool                   `json:"block_exploits"`
 	AdvancedConfig    string                 `json:"advanced_config"`
-	Enabled           bool                   `json:"enabled"`
+	Enabled           Bool                   `json:"enabled"`
 	Meta              map[string]interface{} `json:"meta"`
 }
 
