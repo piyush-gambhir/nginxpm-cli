@@ -1,6 +1,6 @@
 # Nginx Proxy Manager CLI
 
-> `nginxpm` is a command-line interface for managing an Nginx Proxy Manager (NPM) instance — proxy hosts, redirection hosts, TCP/UDP streams, 404 dead hosts, SSL certificates, access lists, users, the audit log, and server settings — over the NPM HTTP API. It is built for both human operators and coding agents (LLMs), with `table`, `json`, and `yaml` output.
+> `nginxpm` is a command-line interface for managing an Nginx Proxy Manager (NPM) instance, proxy hosts, redirection hosts, TCP/UDP streams, 404 dead hosts, SSL certificates, access lists, users, the audit log, and server settings, over the NPM HTTP API. It is built for both human operators and coding agents (LLMs), with `table`, `json`, and `yaml` output.
 
 ## About
 
@@ -69,13 +69,13 @@ NPM uses **email/password authentication**. On every invocation the CLI:
 
 The CLI does **not** persist JWT tokens. It stores (at most) the URL, email, and password in a profile and re-authenticates on each run. There is no separate `logout`; remove the profile from the config file or delete the file to sign out.
 
-If NPM returns an empty token, the error is `empty token in response (2FA may be required)` — typically wrong credentials or a 2FA-enabled account (2FA login is not supported by the token exchange).
+If NPM returns an empty token, the error is `empty token in response (2FA may be required)`, typically wrong credentials or a 2FA-enabled account (2FA login is not supported by the token exchange).
 
 ### Ways to supply credentials
 
-1. **Interactive login** — `nginxpm login` prompts for URL, email, password, and "skip TLS verification?", tests reachability via the unauthenticated status endpoint, authenticates, then saves a named profile (default name `default`) and marks it current. Requires a TTY; fails under `--no-input`.
-2. **Environment variables** — best for CI/CD; no `login` needed.
-3. **CLI flags** — `--url`, `--email`, `--password` (`-p`), `--insecure` (`-k`) for one-off commands.
+1. **Interactive login**, `nginxpm login` prompts for URL, email, password, and "skip TLS verification?", tests reachability via the unauthenticated status endpoint, authenticates, then saves a named profile (default name `default`) and marks it current. Requires a TTY; fails under `--no-input`.
+2. **Environment variables**, best for CI/CD; no `login` needed.
+3. **CLI flags**, `--url`, `--email`, `--password` (`-p`), `--insecure` (`-k`) for one-off commands.
 
 ### Resolution order (precedence)
 
@@ -83,7 +83,7 @@ For each of URL / email / password / insecure, the first non-empty source wins:
 
 1. **CLI flags** (`--url`, `--email`, `--password`, `--insecure`)
 2. **Environment variables** (`NGINXPM_URL`, `NGINXPM_EMAIL`, `NGINXPM_PASSWORD`, `NGINXPM_INSECURE`)
-3. **Config-file profile** — the profile named by `--profile`, else the config's `current_profile`
+3. **Config-file profile**, the profile named by `--profile`, else the config's `current_profile`
 
 ### Config file path
 
@@ -155,9 +155,9 @@ Top-level command map:
 | `update` | | Self-update the CLI | no |
 | `completion` | | Generate shell completion scripts | no |
 
-Conventions used below: `<id>` is a positional numeric ID (NPM resource ID). List sub-commands accept the alias `ls`. Bodies for `create`/`update` come from `-f <file|->` as JSON or YAML. Deletes prompt for confirmation unless `--confirm` (or `--no-input`, which makes confirmation fail closed — supply `--confirm` to delete non-interactively).
+Conventions used below: `<id>` is a positional numeric ID (NPM resource ID). List sub-commands accept the alias `ls`. Bodies for `create`/`update` come from `-f <file|->` as JSON or YAML. Deletes prompt for confirmation unless `--confirm` (or `--no-input`, which makes confirmation fail closed, supply `--confirm` to delete non-interactively).
 
-### proxy — manage proxy hosts
+### proxy, manage proxy hosts
 
 ```text
 nginxpm proxy list
@@ -184,7 +184,7 @@ nginxpm proxy create -f proxy.json
 nginxpm proxy disable 7
 ```
 
-### redirect — manage redirection hosts
+### redirect, manage redirection hosts
 
 ```text
 nginxpm redirect list
@@ -205,7 +205,7 @@ nginxpm redirect create -f redirect.json
 nginxpm redirect delete 3 --confirm
 ```
 
-### stream — manage TCP/UDP streams
+### stream, manage TCP/UDP streams
 
 ```text
 nginxpm stream list
@@ -227,7 +227,7 @@ cat stream.yaml | nginxpm stream create -f -
 nginxpm stream enable 2
 ```
 
-### dead — manage 404 dead hosts
+### dead, manage 404 dead hosts
 
 ```text
 nginxpm dead list
@@ -249,7 +249,7 @@ nginxpm dead list
 nginxpm 404 get 3 -o json    # using the `404` alias for the group
 ```
 
-### cert — manage SSL certificates
+### cert, manage SSL certificates
 
 ```text
 nginxpm cert list
@@ -277,7 +277,7 @@ nginxpm cert test-http example.com www.example.com
 nginxpm ssl list -o json    # using the `ssl` alias
 ```
 
-### access — manage access lists
+### access, manage access lists
 
 ```text
 nginxpm access list
@@ -296,7 +296,7 @@ nginxpm acl list
 nginxpm access create -f access.json
 ```
 
-### user — manage users
+### user, manage users
 
 ```text
 nginxpm user list
@@ -339,7 +339,7 @@ nginxpm user create -f user.json
 nginxpm user password 4 -f new-password.json
 ```
 
-### audit — view the audit log
+### audit, view the audit log
 
 ```text
 nginxpm audit list
@@ -355,7 +355,7 @@ nginxpm log list -o json    # using the `log` alias
 nginxpm audit get 42
 ```
 
-### setting — manage server settings
+### setting, manage server settings
 
 ```text
 nginxpm setting list
@@ -375,7 +375,7 @@ nginxpm setting get default-site -o json
 nginxpm setting update default-site -f setting.json
 ```
 
-### config — manage CLI configuration (no auth)
+### config, manage CLI configuration (no auth)
 
 ```text
 nginxpm config view
@@ -386,8 +386,8 @@ nginxpm config list-profiles
 
 - `view`: print the current config file as YAML.
 - `set <key> <value>`: set a config value. Supported keys:
-  - `defaults.output` — default output format; value must be `table`, `json`, or `yaml`.
-  - `current_profile` — name of the active profile (must already exist).
+  - `defaults.output`, default output format; value must be `table`, `json`, or `yaml`.
+  - `current_profile`, name of the active profile (must already exist).
 - `use-profile <name>`: switch the active profile (must already exist).
 - `list-profiles`: list profiles with their URLs; the active profile is marked with `*`.
 
@@ -399,7 +399,7 @@ nginxpm config use-profile production
 nginxpm config list-profiles
 ```
 
-### login — interactive authentication (sets up auth)
+### login, interactive authentication (sets up auth)
 
 ```text
 nginxpm login
@@ -407,7 +407,7 @@ nginxpm login
 
 Prompts for URL, email, password, and "Skip TLS verification? (y/N)"; tests server reachability, authenticates, then prompts for a profile name (default `default`), saves it, and marks it current. Fails with an error under `--no-input` (use env vars instead).
 
-### status — show server status (URL only, no auth)
+### status, show server status (URL only, no auth)
 
 ```text
 nginxpm status
@@ -421,7 +421,7 @@ Example:
 nginxpm status --url http://localhost:81 -o json
 ```
 
-### version — print version info
+### version, print version info
 
 ```text
 nginxpm version
@@ -429,7 +429,7 @@ nginxpm version
 
 Prints `nginxpm-cli version <v>`, the commit hash, and the build date.
 
-### update — self-update (no auth)
+### update, self-update (no auth)
 
 ```text
 nginxpm update [--check]
@@ -437,7 +437,7 @@ nginxpm update [--check]
 
 See the [Self-update](#self-update) section above. `--check` only reports availability; bare `update` prompts before installing. Disabled for `dev` builds.
 
-### completion — shell completions (no auth)
+### completion, shell completions (no auth)
 
 ```text
 nginxpm completion [bash|zsh|fish|powershell]
@@ -457,7 +457,7 @@ nginxpm completion powershell | Out-String | Invoke-Expression
 Choose with `-o` / `--output` (or the `defaults.output` config key). Supported values: `table`, `json`, `yaml`.
 
 - `table` (default): aligned, human-readable columns. Headers are uppercased. For commands that render full objects without a table definition (e.g. `dead get`), table falls back to JSON.
-- `json`: pretty-printed (2-space indented) JSON. **Best for scripting and agents** — stable, parseable, pipe to `jq`.
+- `json`: pretty-printed (2-space indented) JSON. **Best for scripting and agents**, stable, parseable, pipe to `jq`.
 - `yaml`: YAML serialization of the same data.
 
 Note: `cert dns-providers` always outputs JSON regardless of `-o`. Confirmation prompts and "created/updated/deleted" notices go to stdout as plain text unless `--quiet`.

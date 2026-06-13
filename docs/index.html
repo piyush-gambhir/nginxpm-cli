@@ -4,10 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="color-scheme" content="dark light" />
-  <title>Nginx Proxy Manager CLI — manage Nginx Proxy Manager from your terminal</title>
-  <meta name="description" content="A fast, scriptable command-line interface for Nginx Proxy Manager. Proxy hosts, redirections, streams, SSL certificates, access lists, users, audit logs — with JSON output for scripts and agents." />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <title>Nginx Proxy Manager CLI, manage Nginx Proxy Manager from your terminal</title>
+  <meta name="description" content="A fast, scriptable command-line interface for Nginx Proxy Manager. Proxy hosts, redirections, streams, SSL certificates, access lists, users, audit logs, with JSON output for scripts and agents." />
   <meta property="og:title" content="Nginx Proxy Manager CLI" />
-  <meta property="og:description" content="Manage Nginx Proxy Manager from the command line — proxy hosts, SSL certs, redirections, streams, and more, with first-class JSON output." />
+  <meta property="og:description" content="Manage Nginx Proxy Manager from the command line, proxy hosts, SSL certs, redirections, streams, and more, with first-class JSON output." />
   <meta property="og:type" content="website" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -84,7 +85,7 @@
     .meta span { display: inline-flex; align-items: center; gap: 8px; }
     .meta .dot { width: 3px; height: 3px; background: currentColor; border-radius: 50%; opacity: .6; }
 
-    .term { margin-top: 52px; background: var(--code-bg); border: 1px solid var(--border-2); border-radius: 16px; overflow: hidden; box-shadow: 0 40px 90px -32px rgba(0,0,0,0.75), 0 0 0 1px rgba(255,255,255,0.02); }
+    .term { position: relative; margin-top: 52px; background: var(--code-bg); border: 1px solid var(--border-2); border-radius: 16px; overflow: hidden; box-shadow: 0 40px 90px -32px rgba(0,0,0,0.75), 0 0 0 1px rgba(255,255,255,0.02); }
     .term-bar { display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.018); }
     .term-dot { width: 11px; height: 11px; border-radius: 50%; }
     .term-title { margin-left: 10px; font: 500 12px/1 'Geist Mono', monospace; color: var(--text-subtle-solid); }
@@ -115,10 +116,10 @@
     .code { position: relative; background: var(--code-bg); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; transition: border-color .2s; }
     .code:hover { border-color: var(--border-2); }
     .code pre { padding: 17px 19px; overflow-x: auto; font-size: 13px; line-height: 1.75; color: var(--text); white-space: pre; }
-    .code .copy { position: absolute; top: 9px; right: 9px; padding: 5px 11px; font: 500 11.5px/1 'Geist', sans-serif; background: var(--surface); color: var(--text-muted); border: 1px solid var(--border-2); border-radius: 7px; cursor: pointer; transition: all .15s; opacity: 0; }
-    .code:hover .copy { opacity: 1; }
-    .code .copy:hover { color: var(--text); border-color: rgba(255,255,255,0.28); }
-    .code .copy.copied { color: var(--green); border-color: rgba(95,214,164,0.4); opacity: 1; }
+    .code .copy, .term .copy { position: absolute; top: 9px; right: 9px; padding: 5px 11px; font: 500 11.5px/1 'Geist', sans-serif; background: var(--surface); color: var(--text-muted); border: 1px solid var(--border-2); border-radius: 7px; cursor: pointer; transition: all .15s; opacity: 0; }
+    .code:hover .copy, .term:hover .copy { opacity: 1; }
+    .code .copy:hover, .term .copy:hover { color: var(--text); border-color: rgba(255,255,255,0.28); }
+    .code .copy.copied, .term .copy.copied { color: var(--green); border-color: rgba(95,214,164,0.4); opacity: 1; }
     .cm { color: var(--text-subtle-solid); }
     .ci { background: var(--surface-2); border: 1px solid var(--border); border-radius: 6px; padding: 1.5px 7px; font-size: .86em; color: var(--accent); }
 
@@ -188,7 +189,7 @@
 
     <header>
       <h1>Manage Nginx Proxy Manager<br/><span class="grad">from the command line.</span></h1>
-      <p class="lede">Full coverage of proxy hosts, redirections, streams, dead hosts, SSL certificates, access lists, users, audit logs, and settings — with first-class JSON output for scripts and agents.</p>
+      <p class="lede">Full coverage of proxy hosts, redirections, streams, dead hosts, SSL certificates, access lists, users, audit logs, and settings, with first-class JSON output for scripts and agents.</p>
       <div class="cta-row">
         <a href="#install" class="btn btn-primary">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 21h16"/></svg>
@@ -210,7 +211,7 @@
           <span class="term-dot" style="background:#ff5f57"></span>
           <span class="term-dot" style="background:#febc2e"></span>
           <span class="term-dot" style="background:#28c840"></span>
-          <span class="term-title">— nginxpm</span>
+          <span class="term-title">nginxpm</span>
         </div>
         <pre><span class="p">$</span> nginxpm login
 <span class="ok">✓</span> authenticated · profile saved to <span class="dim">~/.config/nginxpm-cli/</span>
@@ -278,8 +279,8 @@ make install</pre>
           <span class="term-dot" style="background:#ff5f57"></span>
           <span class="term-dot" style="background:#febc2e"></span>
           <span class="term-dot" style="background:#28c840"></span>
-          <span class="term-title">— quick start</span>
-          <button class="copy" onclick="copyCode(this)" style="position:absolute;right:14px;top:10px;opacity:1;">Copy</button>
+          <span class="term-title">quick start</span>
+          <button class="copy" onclick="copyCode(this)">Copy</button>
         </div>
         <pre><span class="cm"># 1. Authenticate (saves a profile to ~/.config/nginxpm-cli/)</span>
 nginxpm login
@@ -322,7 +323,7 @@ nginxpm proxy list <span class="flag">-o</span> json <span class="dim">|</span> 
           </div>
           <div class="auth-card">
             <div class="top"><span class="name">env vars</span><span class="tag tag-dc">CI / Agents</span></div>
-            <div class="d">Set <em>NGINXPM_URL</em>, <em>NGINXPM_EMAIL</em>, and <em>NGINXPM_PASSWORD</em> — no profile file needed.</div>
+            <div class="d">Set <em>NGINXPM_URL</em>, <em>NGINXPM_EMAIL</em>, and <em>NGINXPM_PASSWORD</em>, no profile file needed.</div>
           </div>
           <div class="auth-card">
             <div class="top"><span class="name">profiles</span><span class="tag tag-cloud">Multi-instance</span></div>
@@ -369,13 +370,13 @@ nginxpm proxy list <span class="flag">--profile</span> staging       <span class
 
       <div class="block">
         <div class="cmd-grid">
-          <div class="cmd-card"><div class="cmd"><span class="verb">nginxpm</span> proxy</div><div class="desc">Reverse proxy hosts (alias: <code>ph</code>) — list, get, create, update, delete, enable, disable</div></div>
-          <div class="cmd-card"><div class="cmd"><span class="verb">nginxpm</span> redirect</div><div class="desc">Redirection hosts (alias: <code>redir</code>, <code>rh</code>) — list, create, update, delete</div></div>
-          <div class="cmd-card"><div class="cmd"><span class="verb">nginxpm</span> stream</div><div class="desc">TCP / UDP streams (alias: <code>st</code>) — list, create, update, delete</div></div>
-          <div class="cmd-card"><div class="cmd"><span class="verb">nginxpm</span> dead</div><div class="desc">404 dead hosts (alias: <code>dh</code>, <code>404</code>) — list, create, update, delete</div></div>
-          <div class="cmd-card"><div class="cmd"><span class="verb">nginxpm</span> cert</div><div class="desc">SSL certificates (alias: <code>ssl</code>) — list, create, delete, renew</div></div>
-          <div class="cmd-card"><div class="cmd"><span class="verb">nginxpm</span> access</div><div class="desc">Access lists (alias: <code>acl</code>) — manage IP-based access controls</div></div>
-          <div class="cmd-card"><div class="cmd"><span class="verb">nginxpm</span> user</div><div class="desc">Manage NPM users — list, create, update, delete</div></div>
+          <div class="cmd-card"><div class="cmd"><span class="verb">nginxpm</span> proxy</div><div class="desc">Reverse proxy hosts (alias: <code>ph</code>), list, get, create, update, delete, enable, disable</div></div>
+          <div class="cmd-card"><div class="cmd"><span class="verb">nginxpm</span> redirect</div><div class="desc">Redirection hosts (alias: <code>redir</code>, <code>rh</code>), list, create, update, delete</div></div>
+          <div class="cmd-card"><div class="cmd"><span class="verb">nginxpm</span> stream</div><div class="desc">TCP / UDP streams (alias: <code>st</code>), list, create, update, delete</div></div>
+          <div class="cmd-card"><div class="cmd"><span class="verb">nginxpm</span> dead</div><div class="desc">404 dead hosts (alias: <code>dh</code>, <code>404</code>), list, create, update, delete</div></div>
+          <div class="cmd-card"><div class="cmd"><span class="verb">nginxpm</span> cert</div><div class="desc">SSL certificates (alias: <code>ssl</code>), list, create, delete, renew</div></div>
+          <div class="cmd-card"><div class="cmd"><span class="verb">nginxpm</span> access</div><div class="desc">Access lists (alias: <code>acl</code>), manage IP-based access controls</div></div>
+          <div class="cmd-card"><div class="cmd"><span class="verb">nginxpm</span> user</div><div class="desc">Manage NPM users, list, create, update, delete</div></div>
           <div class="cmd-card"><div class="cmd"><span class="verb">nginxpm</span> audit</div><div class="desc">View audit log of all changes to the NPM instance</div></div>
           <div class="cmd-card"><div class="cmd"><span class="verb">nginxpm</span> setting</div><div class="desc">Manage server settings</div></div>
           <div class="cmd-card"><div class="cmd"><span class="verb">nginxpm</span> config</div><div class="desc">View/set configuration, manage profiles</div></div>
@@ -389,7 +390,7 @@ nginxpm proxy list <span class="flag">--profile</span> staging       <span class
         <div class="block-label">Common operations</div>
         <div class="code">
           <button class="copy" onclick="copyCode(this)">Copy</button>
-          <pre><span class="cm"># Proxy hosts — list, get, create, update, delete, enable / disable</span>
+          <pre><span class="cm"># Proxy hosts, list, get, create, update, delete, enable / disable</span>
 nginxpm proxy list
 nginxpm proxy get 1 <span class="flag">-o</span> json
 nginxpm proxy create <span class="flag">-f</span> proxy.json
@@ -398,7 +399,7 @@ nginxpm proxy delete 1 <span class="flag">--confirm</span>
 nginxpm proxy enable 1
 nginxpm proxy disable 1
 
-<span class="cm"># Redirection hosts — same shape</span>
+<span class="cm"># Redirection hosts, same shape</span>
 nginxpm redirect list
 nginxpm redirect create <span class="flag">-f</span> redirect.json
 
