@@ -1,0 +1,573 @@
+# Nginx Proxy Manager CLI
+
+> `nginxpm` is a command-line interface for managing an Nginx Proxy Manager (NPM) instance — proxy hosts, redirection hosts, TCP/UDP streams, 404 dead hosts, SSL certificates, access lists, users, the audit log, and server settings — over the NPM HTTP API. It is built for both human operators and coding agents (LLMs), with `table`, `json`, and `yaml` output.
+
+## About
+
+`nginxpm` is a single static Go binary that talks to the Nginx Proxy Manager REST API. It authenticates with email + password (NPM exchanges these for a JWT bearer token), then performs CRUD and lifecycle operations against the instance.
+
+- Binary name: `nginxpm`
+- This is an **independent, unofficial tool**. It is **not affiliated with, endorsed by, or sponsored by** Nginx Proxy Manager or its maintainers. "Nginx Proxy Manager" is the name of the upstream project; this CLI is a third-party client.
+- Supported platforms: macOS, Linux, and Windows, on both `amd64` and `arm64`.
+- Distributed under the MIT license.
+- Agent notes: every command supports `--help`; use `-o json` for structured, machine-readable output. Use `--no-input` so destructive/interactive prompts never block automation. A `CLAUDE.md` guide and a `SKILL.md` (Cursor/agent skill) ship in the repo.
+
+This document is the complete reference. An LLM or agent should be able to drive `nginxpm` correctly using only what is below.
+
+## Links
+
+- Home: https://nginxpm-cli.pages.dev/
+- Source: https://github.com/piyush-gambhir/nginxpm-cli
+- Issues: https://github.com/piyush-gambhir/nginxpm-cli/issues
+- Privacy: https://nginxpm-cli.pages.dev/privacy-policy
+- Terms: https://nginxpm-cli.pages.dev/terms-of-service
+- Contact: https://nginxpm-cli.pages.dev/contact
+
+## Install
+
+There is no Homebrew, apt, Docker, or install-script distribution. Use one of:
+
+```bash
+# 1. Go toolchain (installs the latest tagged release into $GOBIN / $GOPATH/bin)
+go install github.com/piyush-gambhir/nginxpm-cli@latest
+
+# 2. Prebuilt release binary
+#    Download the archive for your OS/arch from:
+#    https://github.com/piyush-gambhir/nginxpm-cli/releases
+#    Release assets are named: nginxpm-cli_<os>_<arch>.tar.gz
+#    (e.g. nginxpm-cli_darwin_arm64.tar.gz, nginxpm-cli_linux_amd64.tar.gz);
+#    Windows archives are .zip (e.g. nginxpm-cli_windows_amd64.zip).
+#    Each release also ships checksums.txt for SHA256 verification.
+#    Extract and place the `nginxpm` binary on your PATH.
+
+# 3. From source
+git clone https://github.com/piyush-gambhir/nginxpm-cli.git
+cd nginxpm-cli && make install
+```
+
+Note: when installed via `go install`, the build version is the module pseudo-version. When built from source without ldflags it reports version `dev`, and the self-update path (`nginxpm update`) is disabled for `dev` builds.
+
+### Self-update
+
+```bash
+# Check whether a newer release exists (does not install)
+nginxpm update --check
+
+# Download, SHA256-verify, and atomically replace the running binary
+nginxpm update
+```
+
+`nginxpm update` downloads `nginxpm-cli_<os>_<arch>.tar.gz` from the matching GitHub release, verifies it against `checksums.txt`, then atomically replaces the current executable (may require `sudo` if the binary lives in a root-owned path). Non-`update`/`version`/`completion`/`help` commands also run a background update check and print a one-line notice on stderr when an upgrade is available.
+
+## Authentication
+
+NPM uses **email/password authentication**. On every invocation the CLI:
+
+1. Sends `POST /api/tokens` with `{ "identity": "<email>", "secret": "<password>" }`.
+2. Receives a JWT token.
+3. Sends that token as `Authorization: Bearer <token>` on all subsequent API calls.
+
+The CLI does **not** persist JWT tokens. It stores (at most) the URL, email, and password in a profile and re-authenticates on each run. There is no separate `logout`; remove the profile from the config file or delete the file to sign out.
+
+If NPM returns an empty token, the error is `empty token in response (2FA may be required)` — typically wrong credentials or a 2FA-enabled account (2FA login is not supported by the token exchange).
+
+### Ways to supply credentials
+
+1. **Interactive login** — `nginxpm login` prompts for URL, email, password, and "skip TLS verification?", tests reachability via the unauthenticated status endpoint, authenticates, then saves a named profile (default name `default`) and marks it current. Requires a TTY; fails under `--no-input`.
+2. **Environment variables** — best for CI/CD; no `login` needed.
+3. **CLI flags** — `--url`, `--email`, `--password` (`-p`), `--insecure` (`-k`) for one-off commands.
+
+### Resolution order (precedence)
+
+For each of URL / email / password / insecure, the first non-empty source wins:
+
+1. **CLI flags** (`--url`, `--email`, `--password`, `--insecure`)
+2. **Environment variables** (`NGINXPM_URL`, `NGINXPM_EMAIL`, `NGINXPM_PASSWORD`, `NGINXPM_INSECURE`)
+3. **Config-file profile** — the profile named by `--profile`, else the config's `current_profile`
+
+### Config file path
+
+- Default: `~/.config/nginxpm-cli/config.yaml`
+- If `XDG_CONFIG_HOME` is set: `$XDG_CONFIG_HOME/nginxpm-cli/config.yaml`
+- Created by `nginxpm login` with `0600` permissions.
+
+### Environment variables
+
+| Variable | Effect |
+|----------|--------|
+| `NGINXPM_URL` | Nginx Proxy Manager base URL (e.g. `http://localhost:81`) |
+| `NGINXPM_EMAIL` | Email used for authentication |
+| `NGINXPM_PASSWORD` | Password used for authentication |
+| `NGINXPM_INSECURE` | Skip TLS certificate verification when set to `true` or `1` |
+| `NGINXPM_NO_INPUT` | If set (any non-empty value), disables all interactive prompts (same as `--no-input`) |
+| `NGINXPM_QUIET` | If set (any non-empty value), suppresses informational output (same as `--quiet`) |
+| `NGINXPM_VERBOSE` | If set (any non-empty value), enables verbose HTTP logging to stderr (same as `--verbose`) |
+
+The `status` command needs only a URL (no email/password); `login` and `status` perform their own auth handling.
+
+## Global flags
+
+These persistent flags are valid on every command:
+
+| Flag | Short | Type | Default | Description |
+|------|-------|------|---------|-------------|
+| `--output` | `-o` | string | (profile default, else `table`) | Output format: `table`, `json`, or `yaml` |
+| `--profile` | | string | (config `current_profile`) | Configuration profile to use |
+| `--url` | | string | | Nginx Proxy Manager URL |
+| `--email` | | string | | Email for authentication |
+| `--password` | `-p` | string | | Password for authentication |
+| `--insecure` | `-k` | bool | `false` | Skip TLS certificate verification |
+| `--no-input` | | bool | `false` | Disable all interactive prompts (for CI/agent use) |
+| `--quiet` | `-q` | bool | `false` | Suppress informational ("created"/"updated"/…) output |
+| `--verbose` | `-v` | bool | `false` | Enable verbose HTTP request/response logging to stderr |
+
+Plus `-h` / `--help` on every command. `--no-input`, `--quiet`, and `--verbose` can also be enabled via their `NGINXPM_*` env vars.
+
+### Common resource flags
+
+Several resource commands share these helpers:
+
+| Flag | Short | Used on | Description |
+|------|-------|---------|-------------|
+| `--file` | `-f` | all `create`/`update`, `setting update`, `user password`, `user permissions` | Path to a JSON or YAML file holding the request body. Use `-f -` to read from stdin. The format (JSON vs YAML) is auto-detected from content. **Required** for these commands. |
+| `--confirm` | | all `delete` | Skip the interactive confirmation prompt for destructive deletes. |
+| `--check` | | `update` | Only check for an available update; do not install. |
+
+## Commands
+
+Top-level command map:
+
+| Command / group | Aliases | Purpose | Needs auth |
+|-----------------|---------|---------|------------|
+| `proxy` | `proxy-host`, `ph` | Manage proxy hosts | yes |
+| `redirect` | `redirection`, `redir`, `rh` | Manage redirection hosts | yes |
+| `stream` | `streams`, `st` | Manage TCP/UDP streams | yes |
+| `dead` | `dead-host`, `dh`, `404` | Manage 404 dead hosts | yes |
+| `cert` | `certificate`, `certificates`, `ssl` | Manage SSL certificates | yes |
+| `access` | `access-list`, `acl` | Manage access lists | yes |
+| `user` | `users` | Manage users | yes |
+| `audit` | `audit-log`, `log` | View the audit log | yes |
+| `setting` | `settings` | View/update server settings | yes |
+| `config` | | View/set CLI config, manage profiles | no |
+| `login` | | Interactive auth + save profile | n/a (sets it up) |
+| `status` | | Show server status | no (URL only) |
+| `version` | | Print CLI version/commit/build date | no |
+| `update` | | Self-update the CLI | no |
+| `completion` | | Generate shell completion scripts | no |
+
+Conventions used below: `<id>` is a positional numeric ID (NPM resource ID). List sub-commands accept the alias `ls`. Bodies for `create`/`update` come from `-f <file|->` as JSON or YAML. Deletes prompt for confirmation unless `--confirm` (or `--no-input`, which makes confirmation fail closed — supply `--confirm` to delete non-interactively).
+
+### proxy — manage proxy hosts
+
+```text
+nginxpm proxy list
+nginxpm proxy get <id>
+nginxpm proxy create -f <file|->
+nginxpm proxy update <id> -f <file|->
+nginxpm proxy delete <id> [--confirm]
+nginxpm proxy enable <id>
+nginxpm proxy disable <id>
+```
+
+- `list` (alias `ls`): list all proxy hosts. Table columns: ID, DOMAINS, FORWARD (`scheme://host:port`), SSL (certificate ID or `none`), ENABLED.
+- `get <id>`: show one proxy host.
+- `create -f`: create a proxy host from a JSON/YAML body. Prints `Proxy host <id> created.`
+- `update <id> -f`: replace/update a proxy host from a body.
+- `delete <id>`: delete a proxy host (confirmation required unless `--confirm`).
+- `enable <id>` / `disable <id>`: toggle the host on/off.
+
+Example:
+
+```bash
+nginxpm proxy list -o json
+nginxpm proxy create -f proxy.json
+nginxpm proxy disable 7
+```
+
+### redirect — manage redirection hosts
+
+```text
+nginxpm redirect list
+nginxpm redirect get <id>
+nginxpm redirect create -f <file|->
+nginxpm redirect update <id> -f <file|->
+nginxpm redirect delete <id> [--confirm]
+nginxpm redirect enable <id>
+nginxpm redirect disable <id>
+```
+
+- `list` columns: ID, DOMAINS, FORWARD TO (`scheme://domain`), HTTP CODE, PRESERVE PATH, SSL, ENABLED.
+
+Example:
+
+```bash
+nginxpm redirect create -f redirect.json
+nginxpm redirect delete 3 --confirm
+```
+
+### stream — manage TCP/UDP streams
+
+```text
+nginxpm stream list
+nginxpm stream get <id>
+nginxpm stream create -f <file|->
+nginxpm stream update <id> -f <file|->
+nginxpm stream delete <id> [--confirm]
+nginxpm stream enable <id>
+nginxpm stream disable <id>
+```
+
+- `list` columns: ID, INCOMING PORT, FORWARD TO (`host:port`), TCP, UDP, ENABLED.
+- `create` prints `Stream <id> created.` and then echoes the created stream in the selected output format.
+
+Example:
+
+```bash
+cat stream.yaml | nginxpm stream create -f -
+nginxpm stream enable 2
+```
+
+### dead — manage 404 dead hosts
+
+```text
+nginxpm dead list
+nginxpm dead get <id>
+nginxpm dead create -f <file|->
+nginxpm dead update <id> -f <file|->
+nginxpm dead delete <id> [--confirm]
+nginxpm dead enable <id>
+nginxpm dead disable <id>
+```
+
+- `list` columns: ID, DOMAINS, SSL, ENABLED.
+- `get` renders the full object (JSON-style table fallback).
+
+Example:
+
+```bash
+nginxpm dead list
+nginxpm 404 get 3 -o json    # using the `404` alias for the group
+```
+
+### cert — manage SSL certificates
+
+```text
+nginxpm cert list
+nginxpm cert get <id>
+nginxpm cert create -f <file|->
+nginxpm cert delete <id> [--confirm]
+nginxpm cert renew <id>
+nginxpm cert dns-providers
+nginxpm cert test-http <domain> [domain...]
+```
+
+- `list` columns: ID, NICE NAME, PROVIDER, DOMAINS, EXPIRES.
+- `create -f`: create a certificate; for Let's Encrypt this triggers issuance. Prints `Certificate <id> created.`
+- `delete <id>`: delete (confirmation required unless `--confirm`).
+- `renew <id>`: renew a Let's Encrypt certificate.
+- `dns-providers`: list available DNS challenge providers (always emits JSON regardless of `-o`).
+- `test-http <domain> [domain...]`: test HTTP reachability for one or more domains before issuing a cert. Prints `HTTP reachability test passed.` on success.
+
+Example:
+
+```bash
+nginxpm cert create -f letsencrypt.json
+nginxpm cert renew 5
+nginxpm cert test-http example.com www.example.com
+nginxpm ssl list -o json    # using the `ssl` alias
+```
+
+### access — manage access lists
+
+```text
+nginxpm access list
+nginxpm access get <id>
+nginxpm access create -f <file|->
+nginxpm access update <id> -f <file|->
+nginxpm access delete <id> [--confirm]
+```
+
+- `list` columns: ID, NAME, SATISFY ANY, PASS AUTH.
+
+Example:
+
+```bash
+nginxpm acl list
+nginxpm access create -f access.json
+```
+
+### user — manage users
+
+```text
+nginxpm user list
+nginxpm user get <id|me>
+nginxpm user current
+nginxpm user create -f <file|->
+nginxpm user update <id> -f <file|->
+nginxpm user delete <id> [--confirm]
+nginxpm user permissions <id> -f <file|->
+nginxpm user password <id> -f <file|->
+```
+
+- `list` / `get` columns: ID, NAME, NICKNAME, EMAIL, ROLES, DISABLED.
+- `get <id|me>`: accepts a numeric ID or the literal `me` for the authenticated user.
+- `current` (aliases `me`, `whoami`): show the currently authenticated user.
+- `create -f`: create a user from a body (see example body below).
+- `update <id> -f`: update a user.
+- `delete <id>`: delete a user (confirmation required unless `--confirm`).
+- `permissions <id> -f`: set a user's permissions from a body.
+- `password <id> -f`: change a user's password from a body (fields like `type`, `current`, `secret`).
+
+Example user create body (`user.json`):
+
+```json
+{
+  "name": "CLI User",
+  "nickname": "cli",
+  "email": "cli@example.com",
+  "roles": ["admin"],
+  "is_disabled": false,
+  "auth": { "type": "password", "secret": "s3cure-pa55w0rd" }
+}
+```
+
+Example:
+
+```bash
+nginxpm user whoami -o json
+nginxpm user create -f user.json
+nginxpm user password 4 -f new-password.json
+```
+
+### audit — view the audit log
+
+```text
+nginxpm audit list
+nginxpm audit get <id>
+```
+
+- `list` columns: ID, DATE, USER ID, ACTION, OBJECT TYPE, OBJECT ID. Read-only (no create/update/delete).
+
+Example:
+
+```bash
+nginxpm log list -o json    # using the `log` alias
+nginxpm audit get 42
+```
+
+### setting — manage server settings
+
+```text
+nginxpm setting list
+nginxpm setting get <id>
+nginxpm setting update <id> -f <file|->
+```
+
+- Setting IDs are string keys (e.g. `default-site`), not numbers.
+- `list` / `get` columns: ID, VALUE.
+- `update <id> -f`: update a setting from a body. Prints `Setting "<id>" updated.`
+
+Example:
+
+```bash
+nginxpm settings list
+nginxpm setting get default-site -o json
+nginxpm setting update default-site -f setting.json
+```
+
+### config — manage CLI configuration (no auth)
+
+```text
+nginxpm config view
+nginxpm config set <key> <value>
+nginxpm config use-profile <name>
+nginxpm config list-profiles
+```
+
+- `view`: print the current config file as YAML.
+- `set <key> <value>`: set a config value. Supported keys:
+  - `defaults.output` — default output format; value must be `table`, `json`, or `yaml`.
+  - `current_profile` — name of the active profile (must already exist).
+- `use-profile <name>`: switch the active profile (must already exist).
+- `list-profiles`: list profiles with their URLs; the active profile is marked with `*`.
+
+Example:
+
+```bash
+nginxpm config set defaults.output json
+nginxpm config use-profile production
+nginxpm config list-profiles
+```
+
+### login — interactive authentication (sets up auth)
+
+```text
+nginxpm login
+```
+
+Prompts for URL, email, password, and "Skip TLS verification? (y/N)"; tests server reachability, authenticates, then prompts for a profile name (default `default`), saves it, and marks it current. Fails with an error under `--no-input` (use env vars instead).
+
+### status — show server status (URL only, no auth)
+
+```text
+nginxpm status
+```
+
+Reports server status, version, and whether initial setup is complete. Needs only a URL (via `--url`, `NGINXPM_URL`, or a profile). Table columns: Status, Version, Setup.
+
+Example:
+
+```bash
+nginxpm status --url http://localhost:81 -o json
+```
+
+### version — print version info
+
+```text
+nginxpm version
+```
+
+Prints `nginxpm-cli version <v>`, the commit hash, and the build date.
+
+### update — self-update (no auth)
+
+```text
+nginxpm update [--check]
+```
+
+See the [Self-update](#self-update) section above. `--check` only reports availability; bare `update` prompts before installing. Disabled for `dev` builds.
+
+### completion — shell completions (no auth)
+
+```text
+nginxpm completion [bash|zsh|fish|powershell]
+```
+
+Generates a completion script for the named shell to stdout. Examples:
+
+```bash
+source <(nginxpm completion bash)
+nginxpm completion zsh > "${fpath[1]}/_nginxpm"
+nginxpm completion fish | source
+nginxpm completion powershell | Out-String | Invoke-Expression
+```
+
+## Output formats
+
+Choose with `-o` / `--output` (or the `defaults.output` config key). Supported values: `table`, `json`, `yaml`.
+
+- `table` (default): aligned, human-readable columns. Headers are uppercased. For commands that render full objects without a table definition (e.g. `dead get`), table falls back to JSON.
+- `json`: pretty-printed (2-space indented) JSON. **Best for scripting and agents** — stable, parseable, pipe to `jq`.
+- `yaml`: YAML serialization of the same data.
+
+Note: `cert dns-providers` always outputs JSON regardless of `-o`. Confirmation prompts and "created/updated/deleted" notices go to stdout as plain text unless `--quiet`.
+
+Example (`-o json` piped to `jq`):
+
+```bash
+nginxpm proxy list -o json | jq '.[] | {id, domain_names, enabled}'
+```
+
+## Configuration & profiles
+
+- **Location:** `~/.config/nginxpm-cli/config.yaml` (or `$XDG_CONFIG_HOME/nginxpm-cli/config.yaml`). Written with `0600` perms.
+- **Format:** YAML with three top-level keys: `current_profile` (string), `profiles` (map of name → profile), and `defaults` (with `output`).
+- **Profile fields:** `url`, `email`, `password`, `insecure` (bool).
+
+Example `config.yaml`:
+
+```yaml
+current_profile: default
+profiles:
+  default:
+    url: http://localhost:81
+    email: admin@example.com
+    password: changeme
+    insecure: false
+  production:
+    url: https://npm.example.com
+    email: admin@example.com
+    password: pr0d-p4ssw0rd
+    insecure: false
+defaults:
+  output: table
+```
+
+How profiles work:
+
+- `nginxpm login` creates/overwrites a profile and sets it as `current_profile`.
+- `nginxpm config use-profile <name>` (or `config set current_profile <name>`) switches the active profile.
+- `--profile <name>` selects a profile for a single command, overriding `current_profile`.
+- Flags and env vars still override individual profile fields per the resolution order above.
+
+## Examples / recipes
+
+Authenticate once, then operate:
+
+```bash
+nginxpm login
+nginxpm status
+nginxpm proxy list
+```
+
+CI/CD with env vars and no prompts:
+
+```bash
+export NGINXPM_URL=https://npm.example.com
+export NGINXPM_EMAIL=admin@example.com
+export NGINXPM_PASSWORD="$NPM_PASSWORD"
+export NGINXPM_NO_INPUT=true
+nginxpm proxy list -o json
+```
+
+Create a proxy host from a YAML body via stdin:
+
+```bash
+cat <<'YAML' | nginxpm proxy create -f -
+domain_names: [app.example.com]
+forward_scheme: http
+forward_host: 10.0.0.5
+forward_port: 8080
+block_exploits: true
+YAML
+```
+
+Find all disabled proxy hosts with jq:
+
+```bash
+nginxpm proxy list -o json | jq '.[] | select(.enabled == false) | .domain_names'
+```
+
+Issue and verify a Let's Encrypt certificate, then attach it (two-step):
+
+```bash
+nginxpm cert test-http shop.example.com
+nginxpm cert create -f letsencrypt.json          # note the printed certificate ID
+nginxpm proxy update 12 -f proxy-with-cert.json  # set certificate_id in the body
+```
+
+Multi-instance: run the same command against staging without switching the active profile:
+
+```bash
+nginxpm proxy list --profile staging -o json
+```
+
+Bulk-disable proxy hosts non-interactively:
+
+```bash
+for id in $(nginxpm proxy list -o json | jq '.[].id'); do
+  nginxpm proxy disable "$id" --quiet
+done
+```
+
+Delete a resource non-interactively (must pass `--confirm`):
+
+```bash
+nginxpm proxy delete 9 --confirm
+```
+
+Inspect the audit log for recent deletions:
+
+```bash
+nginxpm audit list -o json | jq '.[] | select(.action == "deleted")'
+```
