@@ -19,14 +19,37 @@ Designed for both human operators and coding agents (LLMs). All commands support
 
 ## Installation
 
+Install the latest release with the standalone installer (no Go required):
+
 ```bash
-# Go
+curl -sSfL https://raw.githubusercontent.com/piyush-gambhir/nginxpm-cli/main/install.sh | sh
+```
+
+Install a specific version:
+
+```bash
+curl -sSfL https://raw.githubusercontent.com/piyush-gambhir/nginxpm-cli/main/install.sh | VERSION=0.1.0 sh
+```
+
+The installer detects your OS/arch (macOS and Linux, amd64 and arm64) and installs the `nginxpm` binary to `/usr/local/bin` (override with `INSTALL_DIR`).
+
+### Direct download
+
+Download a prebuilt binary from the [releases page](https://github.com/piyush-gambhir/nginxpm-cli/releases), then extract and install it. For example, macOS arm64:
+
+```bash
+curl -sSfL -o nginxpm.tar.gz https://github.com/piyush-gambhir/nginxpm-cli/releases/download/v0.1.0/nginxpm-cli_darwin_arm64.tar.gz
+tar -xzf nginxpm.tar.gz
+sudo mv nginxpm /usr/local/bin/
+```
+
+### Alternative (build from source, requires Go)
+
+```bash
+# Go install
 go install github.com/piyush-gambhir/nginxpm-cli@latest
 
-# From releases
-# Download the appropriate binary from https://github.com/piyush-gambhir/nginxpm-cli/releases
-
-# From source
+# From a checkout
 git clone https://github.com/piyush-gambhir/nginxpm-cli.git
 cd nginxpm-cli && make install
 ```
