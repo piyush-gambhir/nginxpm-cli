@@ -28,7 +28,7 @@ curl -sSfL https://raw.githubusercontent.com/piyush-gambhir/nginxpm-cli/main/ins
 Install a specific version:
 
 ```bash
-curl -sSfL https://raw.githubusercontent.com/piyush-gambhir/nginxpm-cli/main/install.sh | VERSION=0.1.0 sh
+curl -sSfL https://raw.githubusercontent.com/piyush-gambhir/nginxpm-cli/main/install.sh | VERSION=0.1.1 sh
 ```
 
 The installer detects your OS/arch (macOS and Linux, amd64 and arm64) and installs the `nginxpm` binary to `/usr/local/bin` (override with `INSTALL_DIR`).
@@ -38,7 +38,7 @@ The installer detects your OS/arch (macOS and Linux, amd64 and arm64) and instal
 Download a prebuilt binary from the [releases page](https://github.com/piyush-gambhir/nginxpm-cli/releases), then extract and install it. For example, macOS arm64:
 
 ```bash
-curl -sSfL -o nginxpm.tar.gz https://github.com/piyush-gambhir/nginxpm-cli/releases/download/v0.1.0/nginxpm-cli_darwin_arm64.tar.gz
+curl -sSfL -o nginxpm.tar.gz https://github.com/piyush-gambhir/nginxpm-cli/releases/download/v0.1.1/nginxpm-cli_darwin_arm64.tar.gz
 tar -xzf nginxpm.tar.gz
 sudo mv nginxpm /usr/local/bin/
 ```
