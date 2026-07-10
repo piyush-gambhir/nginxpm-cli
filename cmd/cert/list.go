@@ -39,7 +39,7 @@ Examples:
 				return err
 			}
 
-			if len(certs) == 0 {
+			if len(certs) == 0 && f.Resolved.Output == "table" {
 				fmt.Fprintln(f.IOStreams.Out, "No certificates found.")
 				return nil
 			}

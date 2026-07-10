@@ -104,9 +104,10 @@ For each of URL / email / password / insecure, the first non-empty source wins:
 | `NGINXPM_EMAIL` | Email used for authentication |
 | `NGINXPM_PASSWORD` | Password used for authentication |
 | `NGINXPM_INSECURE` | Skip TLS certificate verification when set to `true` or `1` |
-| `NGINXPM_NO_INPUT` | If set (any non-empty value), disables all interactive prompts (same as `--no-input`) |
-| `NGINXPM_QUIET` | If set (any non-empty value), suppresses informational output (same as `--quiet`) |
-| `NGINXPM_VERBOSE` | If set (any non-empty value), enables verbose HTTP logging to stderr (same as `--verbose`) |
+| `NGINXPM_READ_ONLY` | Block server-mutating commands when set to `true` or `1` |
+| `NGINXPM_NO_INPUT` | Disable all interactive prompts when set to `true` or `1` |
+| `NGINXPM_QUIET` | Suppress informational output when set to `true` or `1` |
+| `NGINXPM_VERBOSE` | Enable verbose HTTP logging to stderr when set to `true` or `1` |
 
 The `status` command needs only a URL (no email/password); `login` and `status` perform their own auth handling.
 
@@ -122,6 +123,7 @@ These persistent flags are valid on every command:
 | `--email` | | string | | Email for authentication |
 | `--password` | `-p` | string | | Password for authentication |
 | `--insecure` | `-k` | bool | `false` | Skip TLS certificate verification |
+| `--read-only` | | bool | `false` | Block server-mutating commands (agent safety mode) |
 | `--no-input` | | bool | `false` | Disable all interactive prompts (for CI/agent use) |
 | `--quiet` | `-q` | bool | `false` | Suppress informational ("created"/"updated"/…) output |
 | `--verbose` | `-v` | bool | `false` | Enable verbose HTTP request/response logging to stderr |

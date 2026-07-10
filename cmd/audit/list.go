@@ -38,7 +38,7 @@ Examples:
 				return err
 			}
 
-			if len(entries) == 0 {
+			if len(entries) == 0 && f.Resolved.Output == "table" {
 				fmt.Fprintln(f.IOStreams.Out, "No audit log entries found.")
 				return nil
 			}

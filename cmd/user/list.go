@@ -39,7 +39,7 @@ Examples:
 				return err
 			}
 
-			if len(users) == 0 {
+			if len(users) == 0 && f.Resolved.Output == "table" {
 				fmt.Fprintln(f.IOStreams.Out, "No users found.")
 				return nil
 			}

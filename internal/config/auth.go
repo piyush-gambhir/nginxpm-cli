@@ -13,11 +13,12 @@ type ResolvedConfig struct {
 	Password string
 	Insecure bool
 	Output   string
+	ReadOnly bool
 }
 
 // Resolve merges flag values, environment variables, and profile values.
 // Priority: flags > env vars > profile values.
-func Resolve(flagURL, flagEmail, flagPassword string, flagInsecure bool, profile *Profile, defaults Defaults) *ResolvedConfig {
+func Resolve(flagURL, flagEmail, flagPassword string, flagInsecure, flagInsecureSet bool, profile *Profile, defaults Defaults) *ResolvedConfig {
 	rc := &ResolvedConfig{}
 
 	// URL
@@ -39,12 +40,19 @@ func Resolve(flagURL, flagEmail, flagPassword string, flagInsecure bool, profile
 	}
 
 	// Insecure
-	if flagInsecure {
-		rc.Insecure = true
+	if flagInsecureSet {
+		rc.Insecure = flagInsecure
 	} else if envInsecure := os.Getenv("NGINXPM_INSECURE"); envInsecure != "" {
 		rc.Insecure = strings.EqualFold(envInsecure, "true") || envInsecure == "1"
 	} else if profile != nil {
 		rc.Insecure = profile.Insecure
+	}
+
+	if profile != nil {
+		rc.ReadOnly = profile.ReadOnly
+	}
+	if envReadOnly := os.Getenv("NGINXPM_READ_ONLY"); envReadOnly != "" {
+		rc.ReadOnly = strings.EqualFold(envReadOnly, "true") || envReadOnly == "1"
 	}
 
 	// Output

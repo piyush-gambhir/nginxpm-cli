@@ -39,7 +39,7 @@ Examples:
 				return err
 			}
 
-			if len(hosts) == 0 {
+			if len(hosts) == 0 && f.Resolved.Output == "table" {
 				fmt.Fprintln(f.IOStreams.Out, "No proxy hosts found.")
 				return nil
 			}
