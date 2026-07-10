@@ -38,7 +38,7 @@ Examples:
 				return err
 			}
 
-			if len(streams) == 0 {
+			if len(streams) == 0 && f.Resolved.Output == "table" {
 				fmt.Fprintln(f.IOStreams.Out, "No streams found.")
 				return nil
 			}

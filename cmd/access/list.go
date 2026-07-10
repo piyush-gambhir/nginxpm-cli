@@ -38,7 +38,7 @@ Examples:
 				return err
 			}
 
-			if len(lists) == 0 {
+			if len(lists) == 0 && f.Resolved.Output == "table" {
 				fmt.Fprintln(f.IOStreams.Out, "No access lists found.")
 				return nil
 			}

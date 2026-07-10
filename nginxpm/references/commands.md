@@ -129,6 +129,7 @@ Quick reference of all commands. For full details, see `CLAUDE.md` or run `nginx
 | `--email <email>` | Email for authentication override |
 | `-p, --password <pass>` | Password for authentication override |
 | `-k, --insecure` | Skip TLS certificate verification |
+| `--read-only` | Block server-mutating commands (agent safety mode) |
 | `--no-input` | Disable all interactive prompts (for CI/agent use) |
 | `-q, --quiet` | Suppress informational output |
 | `-v, --verbose` | Enable verbose HTTP logging |

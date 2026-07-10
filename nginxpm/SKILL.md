@@ -21,6 +21,7 @@ The full command reference, workflows, and examples live in **`CLAUDE.md`** in t
 | Config | `~/.config/nginxpm-cli/config.yaml` |
 | Machine-readable output | `-o json` (prefer for agents) |
 | Non-interactive | set env vars (`NGINXPM_URL`, `NGINXPM_EMAIL`, `NGINXPM_PASSWORD`) and/or `--no-input` |
+| Read-only safety | set `NGINXPM_READ_ONLY=true` or pass `--read-only` to block server mutations |
 
 ## Discovering commands
 

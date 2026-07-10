@@ -14,6 +14,7 @@ type Profile struct {
 	Email    string `yaml:"email,omitempty"`
 	Password string `yaml:"password,omitempty"`
 	Insecure bool   `yaml:"insecure,omitempty"`
+	ReadOnly bool   `yaml:"read_only,omitempty"`
 }
 
 // Defaults holds default output preferences.

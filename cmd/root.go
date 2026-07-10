@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -31,6 +32,7 @@ var (
 	flagEmail    string
 	flagPassword string
 	flagInsecure bool
+	flagReadOnly bool
 	flagNoInput  bool
 	flagQuiet    bool
 	flagVerbose  bool
@@ -59,6 +61,9 @@ func loadAndResolveConfig(cmd *cobra.Command) (*config.ResolvedConfig, *config.C
 	var profile *config.Profile
 	if profileName != "" {
 		p, ok := cfg.Profiles[profileName]
+		if !ok && cmd.Name() != "login" {
+			return nil, nil, fmt.Errorf("profile %q not found", profileName)
+		}
 		if ok {
 			profile = &p
 		}
@@ -71,12 +76,28 @@ func loadAndResolveConfig(cmd *cobra.Command) (*config.ResolvedConfig, *config.C
 	}
 
 	// Resolve configuration.
-	resolved := config.Resolve(flagURL, flagEmail, flagPassword, flagInsecure, profile, cfg.Defaults)
+	resolved := config.Resolve(flagURL, flagEmail, flagPassword, flagInsecure, cmd.Flags().Changed("insecure"), profile, cfg.Defaults)
 	if output != "" {
 		resolved.Output = output
 	}
 
 	return resolved, cfg, nil
+}
+
+func checkPermissions(cmd *cobra.Command, resolved *config.ResolvedConfig) error {
+	effectiveReadOnly := resolved.ReadOnly
+	if cmd.Flags().Changed("read-only") {
+		effectiveReadOnly = flagReadOnly
+	}
+	if effectiveReadOnly && cmd.Annotations != nil && cmd.Annotations["mutates"] == "true" {
+		return fmt.Errorf("command '%s' is blocked in read-only mode (use --read-only=false or remove read_only from the profile)", cmd.CommandPath())
+	}
+	return nil
+}
+
+func envFlagEnabled(name string) bool {
+	v := strings.TrimSpace(os.Getenv(name))
+	return strings.EqualFold(v, "true") || v == "1"
 }
 
 // createClient sets up the HTTP client factory on the factory.
@@ -114,14 +135,14 @@ Claude Code skill: https://github.com/piyush-gambhir/nginxpm-cli/blob/main/nginx
 		SilenceErrors: true,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			// Check env vars for --no-input, --quiet, --verbose.
-			if !flagNoInput && os.Getenv("NGINXPM_NO_INPUT") != "" {
-				flagNoInput = true
+			if !cmd.Flags().Changed("no-input") {
+				flagNoInput = envFlagEnabled("NGINXPM_NO_INPUT")
 			}
-			if !flagQuiet && os.Getenv("NGINXPM_QUIET") != "" {
-				flagQuiet = true
+			if !cmd.Flags().Changed("quiet") {
+				flagQuiet = envFlagEnabled("NGINXPM_QUIET")
 			}
-			if !flagVerbose && os.Getenv("NGINXPM_VERBOSE") != "" {
-				flagVerbose = true
+			if !cmd.Flags().Changed("verbose") {
+				flagVerbose = envFlagEnabled("NGINXPM_VERBOSE")
 			}
 			f.NoInput = flagNoInput
 			f.Quiet = flagQuiet
@@ -156,6 +177,9 @@ Claude Code skill: https://github.com/piyush-gambhir/nginxpm-cli/blob/main/nginx
 			OutputFormat = resolved.Output
 
 			f.Resolved = resolved
+			if err := checkPermissions(cmd, resolved); err != nil {
+				return err
+			}
 
 			f.Config = func() (*config.Config, error) {
 				return cfg, nil
@@ -192,6 +216,7 @@ Claude Code skill: https://github.com/piyush-gambhir/nginxpm-cli/blob/main/nginx
 	rootCmd.PersistentFlags().StringVar(&flagEmail, "email", "", "Email for authentication")
 	rootCmd.PersistentFlags().StringVarP(&flagPassword, "password", "p", "", "Password for authentication")
 	rootCmd.PersistentFlags().BoolVarP(&flagInsecure, "insecure", "k", false, "Skip TLS certificate verification")
+	rootCmd.PersistentFlags().BoolVar(&flagReadOnly, "read-only", false, "Block write operations (safety mode for agents)")
 	rootCmd.PersistentFlags().BoolVar(&flagNoInput, "no-input", false, "Disable all interactive prompts (for CI/agent use)")
 	rootCmd.PersistentFlags().BoolVarP(&flagQuiet, "quiet", "q", false, "Suppress informational output")
 	rootCmd.PersistentFlags().BoolVarP(&flagVerbose, "verbose", "v", false, "Enable verbose HTTP logging")

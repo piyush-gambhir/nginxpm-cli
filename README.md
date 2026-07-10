@@ -304,6 +304,7 @@ These flags are available on every command:
 | `--email` | Email for authentication |
 | `--password`, `-p` | Password for authentication |
 | `--insecure`, `-k` | Skip TLS certificate verification |
+| `--read-only` | Block all server-mutating commands (agent safety mode) |
 | `--no-input` | Disable all interactive prompts (for CI/agent use) |
 | `--quiet`, `-q` | Suppress informational output |
 | `--verbose`, `-v` | Enable verbose HTTP logging |

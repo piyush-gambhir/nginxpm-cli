@@ -38,7 +38,7 @@ Examples:
 				return err
 			}
 
-			if len(settings) == 0 {
+			if len(settings) == 0 && f.Resolved.Output == "table" {
 				fmt.Fprintln(f.IOStreams.Out, "No settings found.")
 				return nil
 			}
