@@ -1,7 +1,6 @@
 package setting
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -33,7 +32,7 @@ Examples:
 				return err
 			}
 
-			settings, err := c.ListSettings(context.Background())
+			settings, err := c.ListSettings(cmd.Context())
 			if err != nil {
 				return err
 			}

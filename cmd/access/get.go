@@ -1,7 +1,6 @@
 package access
 
 import (
-	"context"
 	"fmt"
 	"strconv"
 
@@ -36,7 +35,7 @@ Examples:
 				return err
 			}
 
-			al, err := c.GetAccessList(context.Background(), id)
+			al, err := c.GetAccessList(cmd.Context(), id)
 			if err != nil {
 				return err
 			}

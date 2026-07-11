@@ -1,7 +1,6 @@
 package audit
 
 import (
-	"context"
 	"fmt"
 	"strconv"
 
@@ -36,7 +35,7 @@ Examples:
 				return err
 			}
 
-			entry, err := c.GetAuditEntry(context.Background(), id)
+			entry, err := c.GetAuditEntry(cmd.Context(), id)
 			if err != nil {
 				return err
 			}

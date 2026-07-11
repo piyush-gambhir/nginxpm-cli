@@ -1,7 +1,6 @@
 package dead
 
 import (
-	"context"
 	"fmt"
 	"strings"
 
@@ -34,7 +33,7 @@ Examples:
 				return err
 			}
 
-			hosts, err := c.ListDeadHosts(context.Background())
+			hosts, err := c.ListDeadHosts(cmd.Context())
 			if err != nil {
 				return err
 			}

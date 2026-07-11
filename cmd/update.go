@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"bufio"
 	"compress/gzip"
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
@@ -26,10 +27,11 @@ func newUpdateCmd() *cobra.Command {
 	var checkOnly bool
 
 	cmd := &cobra.Command{
-		Use:   "update",
-		Short: "Update nginxpm to the latest version",
-		Long:  "Check for and install the latest version of the nginxpm CLI from GitHub Releases.",
-		Args:  cobra.NoArgs,
+		Use:         "update",
+		Annotations: map[string]string{"mutates": "true"},
+		Short:       "Update nginxpm to the latest version",
+		Long:        "Check for and install the latest version of the nginxpm CLI from GitHub Releases.",
+		Args:        cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			configDir := config.ConfigDir()
 			currentVersion := build.Version
@@ -68,6 +70,9 @@ func newUpdateCmd() *cobra.Command {
 				}
 			}
 			fmt.Fprintf(cmd.OutOrStdout(), "Release:   %s\n\n", info.ReleaseURL)
+			if flagNoInput {
+				return fmt.Errorf("update requires confirmation; cannot run with --no-input (use --check to check only)")
+			}
 
 			fmt.Fprint(cmd.OutOrStdout(), "Do you want to update? [y/N] ")
 			var answer string
@@ -78,7 +83,7 @@ func newUpdateCmd() *cobra.Command {
 				return nil
 			}
 
-			return performUpdate(cmd.OutOrStdout(), info.LatestVersion)
+			return performUpdate(cmd.Context(), cmd.OutOrStdout(), info.LatestVersion)
 		},
 	}
 
@@ -87,7 +92,7 @@ func newUpdateCmd() *cobra.Command {
 	return cmd
 }
 
-func performUpdate(w io.Writer, version string) error {
+func performUpdate(ctx context.Context, w io.Writer, version string) error {
 	osName := runtime.GOOS
 	archName := runtime.GOARCH
 
@@ -107,7 +112,7 @@ func performUpdate(w io.Writer, version string) error {
 	defer os.RemoveAll(tmpDir)
 
 	archivePath := filepath.Join(tmpDir, "nginxpm-cli.tar.gz")
-	if err := downloadFile(archivePath, downloadURL); err != nil {
+	if err := downloadFile(ctx, archivePath, downloadURL); err != nil {
 		return fmt.Errorf("downloading update: %w", err)
 	}
 
@@ -119,7 +124,7 @@ func performUpdate(w io.Writer, version string) error {
 	archiveFilename := fmt.Sprintf("nginxpm-cli_%s_%s.tar.gz", osName, archName)
 
 	fmt.Fprintf(w, "Verifying checksum...\n")
-	if err := verifyChecksum(archivePath, checksumURL, archiveFilename); err != nil {
+	if err := verifyChecksum(ctx, archivePath, checksumURL, archiveFilename); err != nil {
 		return fmt.Errorf("checksum verification failed: %w", err)
 	}
 
@@ -152,9 +157,13 @@ func performUpdate(w io.Writer, version string) error {
 	return nil
 }
 
-func downloadFile(dst, url string) error {
+func downloadFile(ctx context.Context, dst, url string) error {
 	client := &http.Client{Timeout: 120 * time.Second}
-	resp, err := client.Get(url)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return err
+	}
+	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}
@@ -170,7 +179,7 @@ func downloadFile(dst, url string) error {
 	}
 	defer out.Close()
 
-	_, err = io.Copy(out, resp.Body)
+	err = copyUpdatePayload(out, resp.Body)
 	return err
 }
 
@@ -210,7 +219,7 @@ func extractBinary(archivePath, destDir string) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		if _, err := io.Copy(out, tr); err != nil {
+		if err := copyUpdatePayload(out, tr); err != nil {
 			out.Close()
 			return "", err
 		}
@@ -252,7 +261,7 @@ func atomicReplace(src, dst string) error {
 		return fmt.Errorf("opening new binary: %w", err)
 	}
 
-	if _, err := io.Copy(tmpFile, srcFile); err != nil {
+	if err := copyUpdatePayload(tmpFile, srcFile); err != nil {
 		srcFile.Close()
 		tmpFile.Close()
 		return fmt.Errorf("copying new binary: %w", err)
@@ -280,9 +289,13 @@ func atomicReplace(src, dst string) error {
 
 // verifyChecksum downloads checksums.txt from the release, finds the expected
 // SHA256 for the given filename, and compares it against the actual file hash.
-func verifyChecksum(filePath, checksumURL, expectedFilename string) error {
+func verifyChecksum(ctx context.Context, filePath, checksumURL, expectedFilename string) error {
 	client := &http.Client{Timeout: 30 * time.Second}
-	resp, err := client.Get(checksumURL)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, checksumURL, nil)
+	if err != nil {
+		return err
+	}
+	resp, err := client.Do(req)
 	if err != nil {
 		return fmt.Errorf("downloading checksums: %w", err)
 	}
@@ -319,7 +332,7 @@ func verifyChecksum(filePath, checksumURL, expectedFilename string) error {
 	defer f.Close()
 
 	h := sha256.New()
-	if _, err := io.Copy(h, f); err != nil {
+	if err := copyUpdatePayload(h, f); err != nil {
 		return fmt.Errorf("computing checksum: %w", err)
 	}
 	actualHash := hex.EncodeToString(h.Sum(nil))

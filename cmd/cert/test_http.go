@@ -1,7 +1,6 @@
 package cert
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -32,7 +31,7 @@ Examples:
 				return err
 			}
 
-			if err := c.TestHTTP(context.Background(), body); err != nil {
+			if err := c.TestHTTP(cmd.Context(), body); err != nil {
 				return err
 			}
 

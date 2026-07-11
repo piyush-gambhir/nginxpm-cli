@@ -1,7 +1,6 @@
 package redirect
 
 import (
-	"context"
 	"fmt"
 	"strconv"
 
@@ -49,7 +48,7 @@ Examples:
 				return err
 			}
 
-			if err := c.DeleteRedirectHost(context.Background(), id); err != nil {
+			if err := c.DeleteRedirectHost(cmd.Context(), id); err != nil {
 				return err
 			}
 

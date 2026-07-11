@@ -3,7 +3,6 @@ package client
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"strings"
 )
@@ -43,7 +42,7 @@ type Response struct {
 func (r *Response) JSON(v interface{}) error {
 	defer r.HTTPResponse.Body.Close()
 
-	body, err := io.ReadAll(r.HTTPResponse.Body)
+	body, err := readAllLimited(r.HTTPResponse.Body)
 	if err != nil {
 		return fmt.Errorf("reading response body: %w", err)
 	}
@@ -72,7 +71,7 @@ func (r *Response) Error() error {
 	defer r.HTTPResponse.Body.Close()
 
 	if r.HTTPResponse.StatusCode >= 400 {
-		body, err := io.ReadAll(r.HTTPResponse.Body)
+		body, err := readAllLimited(r.HTTPResponse.Body)
 		if err != nil {
 			return &APIError{
 				StatusCode: r.HTTPResponse.StatusCode,
@@ -98,7 +97,7 @@ func (r *Response) StatusCode() int {
 // RawBody reads and returns the raw response body.
 func (r *Response) RawBody() ([]byte, error) {
 	defer r.HTTPResponse.Body.Close()
-	return io.ReadAll(r.HTTPResponse.Body)
+	return readAllLimited(r.HTTPResponse.Body)
 }
 
 // extractErrorMessage attempts to extract a meaningful error message from

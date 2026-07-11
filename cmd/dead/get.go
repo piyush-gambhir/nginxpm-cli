@@ -1,7 +1,6 @@
 package dead
 
 import (
-	"context"
 	"strconv"
 
 	"github.com/spf13/cobra"
@@ -34,7 +33,7 @@ Examples:
 				return err
 			}
 
-			host, err := c.GetDeadHost(context.Background(), id)
+			host, err := c.GetDeadHost(cmd.Context(), id)
 			if err != nil {
 				return err
 			}

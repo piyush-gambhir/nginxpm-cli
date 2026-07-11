@@ -1,7 +1,6 @@
 package stream
 
 import (
-	"context"
 	"fmt"
 	"strconv"
 
@@ -32,7 +31,7 @@ Examples:
 				return err
 			}
 
-			if err := c.DisableStream(context.Background(), id); err != nil {
+			if err := c.DisableStream(cmd.Context(), id); err != nil {
 				return err
 			}
 

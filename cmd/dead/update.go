@@ -1,7 +1,6 @@
 package dead
 
 import (
-	"context"
 	"fmt"
 	"strconv"
 
@@ -47,7 +46,7 @@ Examples:
 				return err
 			}
 
-			host, err := c.UpdateDeadHost(context.Background(), id, body)
+			host, err := c.UpdateDeadHost(cmd.Context(), id, body)
 			if err != nil {
 				return err
 			}

@@ -1,7 +1,6 @@
 package user
 
 import (
-	"context"
 	"fmt"
 	"strconv"
 
@@ -48,7 +47,7 @@ Examples:
 				return err
 			}
 
-			if err := c.ChangePassword(context.Background(), id, body); err != nil {
+			if err := c.ChangePassword(cmd.Context(), id, body); err != nil {
 				return err
 			}
 

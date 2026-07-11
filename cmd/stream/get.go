@@ -1,7 +1,6 @@
 package stream
 
 import (
-	"context"
 	"strconv"
 
 	"github.com/spf13/cobra"
@@ -34,7 +33,7 @@ Examples:
 				return err
 			}
 
-			stream, err := c.GetStream(context.Background(), id)
+			stream, err := c.GetStream(cmd.Context(), id)
 			if err != nil {
 				return err
 			}

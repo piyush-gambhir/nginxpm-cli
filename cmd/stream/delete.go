@@ -1,7 +1,6 @@
 package stream
 
 import (
-	"context"
 	"fmt"
 	"strconv"
 
@@ -49,7 +48,7 @@ Examples:
 				return err
 			}
 
-			if err := c.DeleteStream(context.Background(), id); err != nil {
+			if err := c.DeleteStream(cmd.Context(), id); err != nil {
 				return err
 			}
 

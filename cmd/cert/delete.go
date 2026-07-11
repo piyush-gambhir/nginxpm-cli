@@ -1,7 +1,6 @@
 package cert
 
 import (
-	"context"
 	"fmt"
 	"strconv"
 
@@ -49,7 +48,7 @@ Examples:
 				return err
 			}
 
-			if err := c.DeleteCertificate(context.Background(), id); err != nil {
+			if err := c.DeleteCertificate(cmd.Context(), id); err != nil {
 				return err
 			}
 

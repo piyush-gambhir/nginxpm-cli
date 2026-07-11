@@ -1,7 +1,6 @@
 package proxy
 
 import (
-	"context"
 	"fmt"
 	"strconv"
 
@@ -49,7 +48,7 @@ Examples:
 				return err
 			}
 
-			if err := c.DeleteProxyHost(context.Background(), id); err != nil {
+			if err := c.DeleteProxyHost(cmd.Context(), id); err != nil {
 				return err
 			}
 

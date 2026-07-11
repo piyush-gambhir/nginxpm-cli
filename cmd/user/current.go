@@ -1,7 +1,6 @@
 package user
 
 import (
-	"context"
 	"fmt"
 	"strings"
 
@@ -32,7 +31,7 @@ Examples:
 				return err
 			}
 
-			u, err := c.GetUser(context.Background(), "me")
+			u, err := c.GetUser(cmd.Context(), "me")
 			if err != nil {
 				return err
 			}

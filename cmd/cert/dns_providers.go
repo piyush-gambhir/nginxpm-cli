@@ -1,8 +1,6 @@
 package cert
 
 import (
-	"context"
-
 	"github.com/spf13/cobra"
 
 	"github.com/piyush-gambhir/nginxpm-cli/internal/cmdutil"
@@ -25,7 +23,7 @@ Examples:
 				return err
 			}
 
-			providers, err := c.ListDNSProviders(context.Background())
+			providers, err := c.ListDNSProviders(cmd.Context())
 			if err != nil {
 				return err
 			}

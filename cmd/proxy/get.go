@@ -1,7 +1,6 @@
 package proxy
 
 import (
-	"context"
 	"fmt"
 	"strconv"
 	"strings"
@@ -37,7 +36,7 @@ Examples:
 				return err
 			}
 
-			host, err := c.GetProxyHost(context.Background(), id)
+			host, err := c.GetProxyHost(cmd.Context(), id)
 			if err != nil {
 				return err
 			}
