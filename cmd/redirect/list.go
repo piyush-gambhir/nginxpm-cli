@@ -1,7 +1,6 @@
 package redirect
 
 import (
-	"context"
 	"fmt"
 	"strings"
 
@@ -34,7 +33,7 @@ Examples:
 				return err
 			}
 
-			hosts, err := c.ListRedirectHosts(context.Background())
+			hosts, err := c.ListRedirectHosts(cmd.Context())
 			if err != nil {
 				return err
 			}

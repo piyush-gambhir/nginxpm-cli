@@ -1,7 +1,6 @@
 package cert
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -42,7 +41,7 @@ Examples:
 				return err
 			}
 
-			cert, err := c.CreateCertificate(context.Background(), body)
+			cert, err := c.CreateCertificate(cmd.Context(), body)
 			if err != nil {
 				return err
 			}

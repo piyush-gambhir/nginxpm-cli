@@ -1,7 +1,6 @@
 package access
 
 import (
-	"context"
 	"fmt"
 	"strconv"
 
@@ -49,7 +48,7 @@ Examples:
 				return err
 			}
 
-			if err := c.DeleteAccessList(context.Background(), id); err != nil {
+			if err := c.DeleteAccessList(cmd.Context(), id); err != nil {
 				return err
 			}
 

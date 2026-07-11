@@ -1,7 +1,6 @@
 package stream
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -33,7 +32,7 @@ Examples:
 				return err
 			}
 
-			streams, err := c.ListStreams(context.Background())
+			streams, err := c.ListStreams(cmd.Context())
 			if err != nil {
 				return err
 			}

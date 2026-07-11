@@ -2,12 +2,13 @@ package cmd
 
 import (
 	"bufio"
-	"context"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
+	"golang.org/x/term"
 
 	"github.com/piyush-gambhir/nginxpm-cli/internal/client"
 	"github.com/piyush-gambhir/nginxpm-cli/internal/cmdutil"
@@ -53,9 +54,10 @@ Examples:
 			}
 
 			// Prompt for Password.
-			fmt.Fprint(out, "Password: ")
-			password, _ := reader.ReadString('\n')
-			password = strings.TrimSpace(password)
+			password, err := readLoginSecret(reader, out, "Password: ")
+			if err != nil {
+				return err
+			}
 			if password == "" {
 				return fmt.Errorf("password is required")
 			}
@@ -80,7 +82,7 @@ Examples:
 				c.EnableVerboseLogging(f.IOStreams.ErrOut)
 			}
 
-			_, err := c.GetStatus(context.Background())
+			_, err = c.GetStatus(cmd.Context())
 			if err != nil {
 				return fmt.Errorf("connection test failed: %w", err)
 			}
@@ -94,7 +96,7 @@ Examples:
 				Password: profile.Password,
 				Insecure: profile.Insecure,
 			}
-			authClient, err := client.NewClient(resolved)
+			authClient, err := client.NewClientContext(cmd.Context(), resolved)
 			if err != nil {
 				return fmt.Errorf("authentication failed: %w", err)
 			}
@@ -110,17 +112,11 @@ Examples:
 				profileName = "default"
 			}
 
-			// Save to config.
-			cfg, err := config.Load()
-			if err != nil {
-				return fmt.Errorf("loading config: %w", err)
-			}
-
-			// Overwrite if exists.
-			cfg.Profiles[profileName] = profile
-			cfg.CurrentProfile = profileName
-
-			if err := cfg.Save(); err != nil {
+			if err := config.Update(func(cfg *config.Config) error {
+				cfg.Profiles[profileName] = profile
+				cfg.CurrentProfile = profileName
+				return nil
+			}); err != nil {
 				return fmt.Errorf("saving config: %w", err)
 			}
 
@@ -128,4 +124,15 @@ Examples:
 			return nil
 		},
 	}
+}
+
+func readLoginSecret(reader *bufio.Reader, out io.Writer, label string) (string, error) {
+	fmt.Fprint(out, label)
+	if term.IsTerminal(int(os.Stdin.Fd())) {
+		secret, err := term.ReadPassword(int(os.Stdin.Fd()))
+		fmt.Fprintln(out)
+		return strings.TrimSpace(string(secret)), err
+	}
+	secret, err := reader.ReadString('\n')
+	return strings.TrimSpace(secret), err
 }

@@ -1,7 +1,6 @@
 package cert
 
 import (
-	"context"
 	"fmt"
 	"strconv"
 	"strings"
@@ -37,7 +36,7 @@ Examples:
 				return err
 			}
 
-			cert, err := c.GetCertificate(context.Background(), id)
+			cert, err := c.GetCertificate(cmd.Context(), id)
 			if err != nil {
 				return err
 			}

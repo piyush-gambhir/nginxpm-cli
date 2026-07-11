@@ -1,7 +1,6 @@
 package audit
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -33,7 +32,7 @@ Examples:
 				return err
 			}
 
-			entries, err := c.ListAuditLog(context.Background())
+			entries, err := c.ListAuditLog(cmd.Context())
 			if err != nil {
 				return err
 			}

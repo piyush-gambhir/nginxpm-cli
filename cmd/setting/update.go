@@ -1,7 +1,6 @@
 package setting
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -40,7 +39,7 @@ Examples:
 				return err
 			}
 
-			if _, err := c.UpdateSetting(context.Background(), args[0], body); err != nil {
+			if _, err := c.UpdateSetting(cmd.Context(), args[0], body); err != nil {
 				return err
 			}
 

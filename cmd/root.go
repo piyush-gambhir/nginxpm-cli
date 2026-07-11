@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -86,11 +87,11 @@ func loadAndResolveConfig(cmd *cobra.Command) (*config.ResolvedConfig, *config.C
 
 func checkPermissions(cmd *cobra.Command, resolved *config.ResolvedConfig) error {
 	effectiveReadOnly := resolved.ReadOnly
-	if cmd.Flags().Changed("read-only") {
-		effectiveReadOnly = flagReadOnly
+	if flagReadOnly {
+		effectiveReadOnly = true
 	}
 	if effectiveReadOnly && cmd.Annotations != nil && cmd.Annotations["mutates"] == "true" {
-		return fmt.Errorf("command '%s' is blocked in read-only mode (use --read-only=false or remove read_only from the profile)", cmd.CommandPath())
+		return fmt.Errorf("command '%s' is blocked in read-only mode; remove read_only from the profile or disable the read-only environment setting to permit writes", cmd.CommandPath())
 	}
 	return nil
 }
@@ -101,9 +102,9 @@ func envFlagEnabled(name string) bool {
 }
 
 // createClient sets up the HTTP client factory on the factory.
-func createClient(f *cmdutil.Factory, resolved *config.ResolvedConfig) {
+func createClient(ctx context.Context, f *cmdutil.Factory, resolved *config.ResolvedConfig) {
 	f.Client = func() (*client.Client, error) {
-		c, err := client.NewClient(resolved)
+		c, err := client.NewClientContext(ctx, resolved)
 		if err != nil {
 			return nil, err
 		}
@@ -135,8 +136,8 @@ Claude Code skill: https://github.com/piyush-gambhir/nginxpm-cli/blob/main/nginx
 		SilenceErrors: true,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			// Check env vars for --no-input, --quiet, --verbose.
-			if !cmd.Flags().Changed("no-input") {
-				flagNoInput = envFlagEnabled("NGINXPM_NO_INPUT")
+			if envFlagEnabled("NGINXPM_NO_INPUT") {
+				flagNoInput = true
 			}
 			if !cmd.Flags().Changed("quiet") {
 				flagQuiet = envFlagEnabled("NGINXPM_QUIET")
@@ -190,7 +191,7 @@ Claude Code skill: https://github.com/piyush-gambhir/nginxpm-cli/blob/main/nginx
 				return nil
 			}
 
-			createClient(f, resolved)
+			createClient(cmd.Context(), f, resolved)
 
 			return nil
 		},

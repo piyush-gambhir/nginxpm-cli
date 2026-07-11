@@ -1,7 +1,6 @@
 package stream
 
 import (
-	"context"
 	"fmt"
 	"strconv"
 
@@ -47,7 +46,7 @@ Examples:
 				return err
 			}
 
-			stream, err := c.UpdateStream(context.Background(), id, body)
+			stream, err := c.UpdateStream(cmd.Context(), id, body)
 			if err != nil {
 				return err
 			}

@@ -1,7 +1,6 @@
 package user
 
 import (
-	"context"
 	"fmt"
 	"strconv"
 
@@ -49,7 +48,7 @@ Examples:
 				return err
 			}
 
-			if err := c.DeleteUser(context.Background(), id); err != nil {
+			if err := c.DeleteUser(cmd.Context(), id); err != nil {
 				return err
 			}
 

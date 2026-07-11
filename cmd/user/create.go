@@ -1,7 +1,6 @@
 package user
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -40,7 +39,7 @@ Examples:
 				return err
 			}
 
-			u, err := c.CreateUser(context.Background(), body)
+			u, err := c.CreateUser(cmd.Context(), body)
 			if err != nil {
 				return err
 			}

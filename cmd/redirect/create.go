@@ -1,7 +1,6 @@
 package redirect
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -40,7 +39,7 @@ Examples:
 				return err
 			}
 
-			host, err := c.CreateRedirectHost(context.Background(), body)
+			host, err := c.CreateRedirectHost(cmd.Context(), body)
 			if err != nil {
 				return err
 			}

@@ -1,7 +1,6 @@
 package cert
 
 import (
-	"context"
 	"fmt"
 	"strconv"
 
@@ -32,7 +31,7 @@ Examples:
 				return err
 			}
 
-			if err := c.RenewCertificate(context.Background(), id); err != nil {
+			if err := c.RenewCertificate(cmd.Context(), id); err != nil {
 				return err
 			}
 

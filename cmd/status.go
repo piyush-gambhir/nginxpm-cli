@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -46,7 +45,7 @@ Examples:
 				c.EnableVerboseLogging(f.IOStreams.ErrOut)
 			}
 
-			status, err := c.GetStatus(context.Background())
+			status, err := c.GetStatus(cmd.Context())
 			if err != nil {
 				return err
 			}

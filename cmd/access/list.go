@@ -1,7 +1,6 @@
 package access
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -33,7 +32,7 @@ Examples:
 				return err
 			}
 
-			lists, err := c.ListAccessLists(context.Background())
+			lists, err := c.ListAccessLists(cmd.Context())
 			if err != nil {
 				return err
 			}

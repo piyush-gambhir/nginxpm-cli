@@ -1,7 +1,6 @@
 package proxy
 
 import (
-	"context"
 	"fmt"
 	"strconv"
 
@@ -32,7 +31,7 @@ Examples:
 				return err
 			}
 
-			if err := c.EnableProxyHost(context.Background(), id); err != nil {
+			if err := c.EnableProxyHost(cmd.Context(), id); err != nil {
 				return err
 			}
 

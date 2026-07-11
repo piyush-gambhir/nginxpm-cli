@@ -1,7 +1,6 @@
 package user
 
 import (
-	"context"
 	"fmt"
 	"strconv"
 
@@ -46,7 +45,7 @@ Examples:
 				return err
 			}
 
-			if err := c.SetUserPermissions(context.Background(), id, body); err != nil {
+			if err := c.SetUserPermissions(cmd.Context(), id, body); err != nil {
 				return err
 			}
 

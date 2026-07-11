@@ -26,6 +26,12 @@ type Client struct {
 // NewClient creates a new client from a ResolvedConfig.
 // It authenticates with the NPM API to obtain a JWT token.
 func NewClient(rc *config.ResolvedConfig) (*Client, error) {
+	return NewClientContext(context.Background(), rc)
+}
+
+// NewClientContext creates and authenticates a client using ctx, allowing
+// callers to cancel login and initial connection setup.
+func NewClientContext(ctx context.Context, rc *config.ResolvedConfig) (*Client, error) {
 	if rc.URL == "" {
 		return nil, fmt.Errorf("Nginx Proxy Manager URL is required (use --url, NGINXPM_URL, or configure a profile)")
 	}
@@ -57,7 +63,7 @@ func NewClient(rc *config.ResolvedConfig) (*Client, error) {
 
 	// Authenticate to get a JWT token.
 	if rc.Email != "" && rc.Password != "" {
-		token, err := c.authenticate(context.Background(), rc.Email, rc.Password)
+		token, err := c.authenticate(ctx, rc.Email, rc.Password)
 		if err != nil {
 			return nil, fmt.Errorf("authentication failed: %w", err)
 		}
