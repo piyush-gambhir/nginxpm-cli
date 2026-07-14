@@ -47,11 +47,11 @@ sudo mv nginxpm /usr/local/bin/
 
 ```bash
 # Go install
-go install github.com/piyush-gambhir/nginxpm-cli@latest
+curl -sSfL https://raw.githubusercontent.com/piyush-gambhir/nginxpm-cli/main/install.sh | sh
 
 # From a checkout
 git clone https://github.com/piyush-gambhir/nginxpm-cli.git
-cd nginxpm-cli && make install
+cd nginxpm-cli/cli-go && make install
 ```
 
 ## Quick Start

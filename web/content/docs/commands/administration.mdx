@@ -1,0 +1,63 @@
+---
+title: Administration
+description: Manage users, audit logs, settings, profiles, updates, and shell completion.
+---
+
+## Users
+
+```bash
+nginxpm user list -o json
+nginxpm user get 1
+nginxpm user current -o json
+nginxpm user create -f user.json
+nginxpm user update 1 -f user.yaml
+nginxpm user permissions 1 -f permissions.json
+nginxpm user password 1 -f password.json
+nginxpm user delete 1 --confirm
+```
+
+`user get me` also fetches the current user. `user current` has the aliases
+`me` and `whoami`; the group alias is `users`.
+
+## Audit log and settings
+
+```bash
+nginxpm audit list -o json
+nginxpm audit get 1
+
+nginxpm setting list
+nginxpm setting get default-site -o json
+nginxpm setting update default-site -f setting.json
+```
+
+Aliases for `audit` are `audit-log` and `log`; `setting` also accepts
+`settings`.
+
+## Profiles and defaults
+
+```bash
+nginxpm config view
+nginxpm config list-profiles
+nginxpm config use-profile production
+nginxpm config set defaults.output json
+```
+
+`config set` accepts `defaults.output` (`table`, `json`, or `yaml`) and
+`current_profile` as configuration keys.
+
+## CLI utilities
+
+```bash
+nginxpm version
+nginxpm update --check
+nginxpm update
+nginxpm completion zsh
+```
+
+Shell completion is available for `bash`, `zsh`, `fish`, and `powershell`.
+
+<Callout type="warn">
+  User, permission, password, and setting changes mutate the server. Use
+  `--read-only` for inspection-only sessions, and treat `config view` output as
+  sensitive because saved profiles contain connection credentials.
+</Callout>

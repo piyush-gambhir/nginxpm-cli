@@ -38,7 +38,7 @@ Use this when the repo is unavailable or to confirm flags after upgrades.
 ## Install (reference)
 
 ```bash
-go install github.com/piyush-gambhir/nginxpm-cli@latest
+curl -sSfL https://raw.githubusercontent.com/piyush-gambhir/nginxpm-cli/main/install.sh | sh
 # or: clone repo && make install -- see README.md
 ```
 

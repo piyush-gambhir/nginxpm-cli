@@ -1,0 +1,51 @@
+---
+title: Streams, certificates & access
+description: Manage TCP/UDP streams, SSL certificates, and access lists.
+---
+
+## TCP/UDP streams
+
+```bash
+nginxpm stream list -o json
+nginxpm stream get 5
+nginxpm stream create -f stream.json
+nginxpm stream update 5 -f stream.yaml
+nginxpm stream disable 5
+nginxpm stream enable 5
+nginxpm stream delete 5 --confirm
+```
+
+Aliases for `stream` are `streams` and `st`.
+
+## SSL certificates
+
+```bash
+nginxpm cert list
+nginxpm cert get 1 -o json
+nginxpm cert create -f cert.json
+nginxpm cert renew 1
+nginxpm cert dns-providers
+nginxpm cert test-http example.com www.example.com
+nginxpm cert delete 1 --confirm
+```
+
+`renew` is for Let's Encrypt certificates. `dns-providers` always emits JSON,
+regardless of the global output setting. Aliases for `cert` are `certificate`,
+`certificates`, and `ssl`.
+
+## Access lists
+
+```bash
+nginxpm access list -o json
+nginxpm access get 1
+nginxpm access create -f access.json
+nginxpm access update 1 -f access.yaml
+nginxpm access delete 1 --confirm
+```
+
+Aliases for `access` are `access-list` and `acl`.
+
+<Callout type="info">
+  Create and update read JSON or YAML from `-f`; pass `-f -` to read a
+  definition from standard input.
+</Callout>

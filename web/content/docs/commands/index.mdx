@@ -1,0 +1,29 @@
+---
+title: Overview
+description: The nginxpm CLI command surface, grouped by area.
+---
+
+Every command supports `-h`/`--help`. List and get commands accept
+`-o table|json|yaml`.
+
+## Identity & connectivity
+
+```bash
+nginxpm status -o json         # server status; no authentication required
+nginxpm user current -o json   # current authenticated user
+nginxpm config list-profiles   # saved connection profiles
+```
+
+## Groups
+
+<Cards>
+  <Card title="Hosts" href="/docs/commands/hosts" description="Proxy hosts, redirection hosts, and 404 dead hosts." />
+  <Card title="Streams, certificates & access" href="/docs/commands/streams-certificates-access" description="TCP/UDP forwarding, SSL certificates, and access lists." />
+  <Card title="Administration" href="/docs/commands/administration" description="Users, audit logs, settings, profiles, updates, and completion." />
+</Cards>
+
+<Callout type="info">
+  This is a curated tour. Use `nginxpm --help`, `nginxpm <group> --help`, and
+  `nginxpm <group> <command> --help` for the exhaustive reference installed
+  with your version.
+</Callout>

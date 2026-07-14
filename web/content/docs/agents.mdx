@@ -1,0 +1,62 @@
+---
+title: Agents
+description: Machine-readable output, non-interactive operation, and read-only safety for coding agents.
+---
+
+nginxpm CLI is designed to be driven by coding agents as well as humans.
+
+## Machine-readable reads
+
+- Add `-o json` to list/get commands and `status` when output will be parsed.
+- Use `-o yaml` when YAML is more convenient for configuration workflows.
+- Non-zero exits signal command failure.
+
+```bash
+nginxpm proxy list -o json | jq '.[] | {id, domains: .domain_names}'
+```
+
+## Safety flags
+
+| Flag | Env | Effect |
+|---|---|---|
+| `--read-only` | `NGINXPM_READ_ONLY=true` | Blocks server-mutating commands such as create, update, delete, enable, disable, and renew |
+| `--no-input` | `NGINXPM_NO_INPUT=1` | Disables interactive prompts; `login` and unconfirmed deletes fail instead of waiting |
+| `--quiet` | `NGINXPM_QUIET=1` | Suppresses informational output |
+| `--verbose` | `NGINXPM_VERBOSE=1` | Enables verbose HTTP logging |
+
+```bash
+# Safe, non-interactive inventory for an agent
+NGINXPM_READ_ONLY=true NGINXPM_NO_INPUT=1 nginxpm proxy list -o json
+```
+
+<Callout type="warn">
+  `--no-input` does not make a command read-only. Use `--read-only` as the
+  safety boundary. Outside read-only mode, `--confirm` allows delete commands
+  to proceed without a prompt.
+</Callout>
+
+## Configuration via environment
+
+No `login` step is needed — set credentials directly:
+
+```bash
+export NGINXPM_URL=https://npm.example.com
+export NGINXPM_EMAIL=admin@example.com
+export NGINXPM_PASSWORD=changeme
+NGINXPM_NO_INPUT=1 nginxpm user current -o json
+```
+
+## Definition files and stdin
+
+Many create and update commands require `-f` with a JSON or YAML definition.
+Use `-f -` to read that definition from standard input:
+
+```bash
+nginxpm proxy create -f proxy.json
+nginxpm setting update default-site -f - < setting.yaml
+```
+
+## Agent skill
+
+A ready-to-use skill lives at
+[`nginxpm/SKILL.md`](https://github.com/piyush-gambhir/nginxpm-cli/blob/main/nginxpm/SKILL.md).

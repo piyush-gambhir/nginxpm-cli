@@ -1,0 +1,53 @@
+---
+title: Installation
+description: Install the prebuilt nginxpm binary or build nginxpm CLI from source.
+---
+
+## Install script (recommended)
+
+Installs the latest prebuilt binary for your OS/arch — no Go toolchain required:
+
+```bash
+curl -sSfL https://raw.githubusercontent.com/piyush-gambhir/nginxpm-cli/main/install.sh | sh
+```
+
+Pin a version or change the install directory:
+
+```bash
+curl -sSfL https://raw.githubusercontent.com/piyush-gambhir/nginxpm-cli/main/install.sh | VERSION=0.1.1 sh
+curl -sSfL https://raw.githubusercontent.com/piyush-gambhir/nginxpm-cli/main/install.sh | INSTALL_DIR=~/.local/bin sh
+```
+
+The installer supports macOS and Linux on amd64 and arm64. Its default install
+directory is `/usr/local/bin`.
+
+## Download a release manually
+
+Prebuilt binaries are attached to each
+[GitHub Release](https://github.com/piyush-gambhir/nginxpm-cli/releases). Download
+the archive for your OS/arch, extract it, and put `nginxpm` on your `PATH`:
+
+```bash
+# example (macOS arm64) — adjust the version and asset name
+curl -sSfL -o nginxpm.tar.gz https://github.com/piyush-gambhir/nginxpm-cli/releases/download/v0.1.1/nginxpm-cli_darwin_arm64.tar.gz
+tar -xzf nginxpm.tar.gz
+sudo mv nginxpm /usr/local/bin/
+```
+
+## Build from source
+
+Requires a Go toolchain. The CLI lives in the `cli-go/` directory of the
+repository:
+
+```bash
+git clone https://github.com/piyush-gambhir/nginxpm-cli.git
+cd nginxpm-cli/cli-go && make install
+```
+
+The binary is `nginxpm`.
+
+## Verify
+
+```bash
+nginxpm version
+```

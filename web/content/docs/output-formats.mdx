@@ -1,0 +1,48 @@
+---
+title: Output formats
+description: Use table, json, and yaml output from nginxpm CLI read commands.
+---
+
+Add `-o <format>` to list and get commands:
+
+- `-o table` — default, human-readable output
+- `-o json` — JSON for tools such as `jq`
+- `-o yaml` — YAML output
+
+<Callout type="info">
+  **Agents: use `-o json` for data you need to parse.** The `--quiet` flag
+  suppresses informational output, while `--verbose` enables HTTP logging for
+  diagnostics.
+</Callout>
+
+```bash
+nginxpm proxy list -o json | jq '.[].id'
+nginxpm cert get 1 -o yaml
+nginxpm status -o json
+```
+
+Set the default once if most of your work is machine-readable:
+
+```bash
+nginxpm config set defaults.output json
+```
+
+## File input
+
+Create and update commands that use `--file` (`-f`) accept JSON files, YAML
+files, or standard input via `-f -`:
+
+```bash
+nginxpm proxy create -f proxy.json
+nginxpm stream update 5 -f stream.yaml
+nginxpm access create -f - < access.json
+```
+
+## Notes & gotchas
+
+- List and get commands render in table, JSON, or YAML; `status` also uses the
+  selected output format.
+- `nginxpm cert dns-providers` always returns JSON, regardless of the selected
+  output setting.
+- `--quiet` (`-q`) suppresses informational output from mutating commands.
+- `--verbose` (`-v`) enables verbose HTTP logging when troubleshooting.

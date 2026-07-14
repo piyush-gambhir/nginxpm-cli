@@ -1,0 +1,61 @@
+---
+title: Quick start
+description: Connect to Nginx Proxy Manager and run your first nginxpm CLI commands.
+---
+
+## 1. Connect
+
+Interactive login creates and selects a named profile:
+
+```bash
+nginxpm login
+```
+
+For non-interactive use, set credentials directly instead:
+
+```bash
+export NGINXPM_URL=https://npm.example.com
+export NGINXPM_EMAIL=admin@example.com
+export NGINXPM_PASSWORD=changeme
+```
+
+## 2. Confirm connectivity and identity
+
+```bash
+nginxpm status
+nginxpm user current
+```
+
+`status` checks the server without authenticating. `user current` verifies the
+credentials by fetching the authenticated user.
+
+## 3. Inspect and manage
+
+```bash
+# Inventory proxy hosts as JSON
+nginxpm proxy list -o json
+
+# Inspect one certificate as YAML
+nginxpm cert get 1 -o yaml
+
+# Create a proxy host from a JSON or YAML definition
+nginxpm proxy create -f proxy.json
+```
+
+Create and update commands that take `-f` also accept standard input as `-f -`.
+Delete commands prompt for confirmation unless you pass `--confirm`.
+
+## Discovering commands
+
+Every command has `-h`/`--help`:
+
+```bash
+nginxpm --help
+nginxpm proxy --help
+nginxpm proxy create --help
+```
+
+<Cards>
+  <Card title="Output formats" href="/docs/output-formats" description="table, json, and yaml output for human and machine use." />
+  <Card title="Commands" href="/docs/commands" description="The command surface, grouped by area." />
+</Cards>

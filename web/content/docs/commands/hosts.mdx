@@ -1,0 +1,55 @@
+---
+title: Hosts
+description: Manage proxy hosts, redirection hosts, and 404 dead hosts.
+---
+
+Proxy, redirection, and dead-host groups share the same lifecycle: list, get,
+create, update, delete, enable, and disable.
+
+## Proxy hosts
+
+```bash
+nginxpm proxy list -o json
+nginxpm proxy get 1
+nginxpm proxy create -f proxy.json
+nginxpm proxy update 1 -f proxy.yaml
+nginxpm proxy disable 1
+nginxpm proxy enable 1
+nginxpm proxy delete 1 --confirm
+```
+
+Aliases for `proxy` are `proxy-host` and `ph`.
+
+## Redirection hosts
+
+```bash
+nginxpm redirect list
+nginxpm redirect get 1 -o json
+nginxpm redirect create -f redirect.json
+nginxpm redirect update 1 -f redirect.yaml
+nginxpm redirect disable 1
+nginxpm redirect enable 1
+nginxpm redirect delete 1 --confirm
+```
+
+Aliases for `redirect` are `redirection`, `redir`, and `rh`.
+
+## 404 dead hosts
+
+```bash
+nginxpm dead list
+nginxpm dead get 3 -o json
+nginxpm dead create -f dead.json
+nginxpm dead update 3 -f dead.yaml
+nginxpm dead disable 3
+nginxpm dead enable 3
+nginxpm dead delete 3 --confirm
+```
+
+Aliases for `dead` are `dead-host`, `dh`, and `404`.
+
+<Callout type="warn">
+  Delete commands prompt unless `--confirm` is present. Create and update
+  require `-f` with JSON, YAML, or `-` for standard input. Use `--read-only`
+  when an agent should only inspect hosts.
+</Callout>

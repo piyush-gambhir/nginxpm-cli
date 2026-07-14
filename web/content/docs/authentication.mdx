@@ -1,0 +1,73 @@
+---
+title: Authentication
+description: Connect to Nginx Proxy Manager with credentials, profiles, environment variables, or flags.
+---
+
+Nginx Proxy Manager authenticates with an email and password. The CLI exchanges
+them for a JWT bearer token on each invocation; it stores the credentials, not
+the JWT, when you save a profile. Configuration priority is **CLI flags >
+environment variables > config profile**.
+
+## Interactive login
+
+```bash
+nginxpm login
+```
+
+The login flow prompts for the NPM URL, email, password, whether to skip TLS
+verification, and a profile name. It checks server reachability, authenticates,
+then saves and selects the profile.
+
+## Environment variables
+
+No `login` step is needed in CI or another non-interactive environment:
+
+```bash
+export NGINXPM_URL=https://npm.example.com
+export NGINXPM_EMAIL=admin@example.com
+export NGINXPM_PASSWORD=changeme
+nginxpm user current -o json
+```
+
+Connection variables are `NGINXPM_URL`, `NGINXPM_EMAIL`,
+`NGINXPM_PASSWORD`, and `NGINXPM_INSECURE`. Set `NGINXPM_INSECURE=true` or
+`1` only when you must connect through a certificate that cannot be verified.
+
+## One-off flags
+
+```bash
+nginxpm proxy list \
+  --url https://npm.example.com \
+  --email admin@example.com \
+  --password "$NGINXPM_PASSWORD"
+```
+
+The equivalent global flags are `--url`, `--email`, `--password` (`-p`), and
+`--insecure` (`-k`).
+
+<Callout type="warn">
+  Prefer environment variables or the protected config file over a password on
+  the command line. Command-line credentials can appear in shell history and
+  process listings. Avoid `--insecure` in production.
+</Callout>
+
+## Named profiles
+
+```bash
+nginxpm config list-profiles
+nginxpm config use-profile production
+nginxpm proxy list --profile staging
+```
+
+Run `nginxpm login` again to create another named profile. The config file lives
+at `~/.config/nginxpm-cli/config.yaml`, or under `$XDG_CONFIG_HOME` when set,
+and is created with mode `0600`.
+
+## Check connectivity
+
+`status` needs the NPM URL but does not authenticate. It reports server status,
+version, and setup state:
+
+```bash
+nginxpm status --url http://localhost:81 -o json
+```

@@ -14,7 +14,7 @@ Thank you for your interest in contributing! This guide will help you get starte
 
 ```bash
 git clone https://github.com/piyush-gambhir/nginxpm-cli.git
-cd nginxpm-cli
+cd nginxpm-cli/cli-go
 make build
 ```
 
