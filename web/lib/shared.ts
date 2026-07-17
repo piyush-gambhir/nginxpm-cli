@@ -1,4 +1,5 @@
 export const appName = 'nginxpm CLI';
+export const siteUrl = 'https://projects.piyushgambhir.com/nginxpm-cli';
 export const docsRoute = '/docs';
 export const docsImageRoute = '/og/docs';
 export const docsContentRoute = '/llms.mdx/docs';

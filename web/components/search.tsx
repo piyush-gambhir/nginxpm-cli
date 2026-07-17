@@ -34,14 +34,17 @@ export default function DefaultSearchDialog(props: SharedProps) {
 
   return (
     <SearchDialog search={search} onSearchChange={setSearch} isLoading={query.isLoading} {...props}>
-      <SearchDialogOverlay />
-      <SearchDialogContent>
-        <SearchDialogHeader>
-          <SearchDialogIcon />
-          <SearchDialogInput />
-          <SearchDialogClose />
+      <SearchDialogOverlay className="osmo-search-overlay" />
+      <SearchDialogContent className="osmo-search-dialog">
+        <SearchDialogHeader className="osmo-search-dialog__header">
+          <SearchDialogIcon className="osmo-search-dialog__icon" />
+          <SearchDialogInput className="osmo-search-dialog__input" />
+          <SearchDialogClose className="osmo-search-dialog__close" />
         </SearchDialogHeader>
-        <SearchDialogList items={query.data !== 'empty' ? query.data : null} />
+        <SearchDialogList
+          className="osmo-search-dialog__results"
+          items={query.data !== 'empty' ? query.data : null}
+        />
       </SearchDialogContent>
     </SearchDialog>
   );

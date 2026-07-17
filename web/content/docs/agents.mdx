@@ -4,6 +4,7 @@ description: Machine-readable output, non-interactive operation, and read-only s
 ---
 
 nginxpm CLI is designed to be driven by coding agents as well as humans.
+It works with Claude Code, OpenAI Codex, Cursor, or any coding agent or agent harness that can run shell commands.
 
 ## Machine-readable reads
 
@@ -37,7 +38,7 @@ NGINXPM_READ_ONLY=true NGINXPM_NO_INPUT=1 nginxpm proxy list -o json
 
 ## Configuration via environment
 
-No `login` step is needed — set credentials directly:
+No `login` step is needed. Set credentials directly:
 
 ```bash
 export NGINXPM_URL=https://npm.example.com
@@ -60,3 +61,6 @@ nginxpm setting update default-site -f - < setting.yaml
 
 A ready-to-use skill lives at
 [`nginxpm/SKILL.md`](https://github.com/piyush-gambhir/nginxpm-cli/blob/main/nginxpm/SKILL.md).
+
+Next, review [authentication](/docs/authentication) for profile and credential
+precedence, or browse the complete [command overview](/docs/commands).

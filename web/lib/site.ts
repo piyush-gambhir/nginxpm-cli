@@ -14,6 +14,12 @@ export interface Feature {
   body: string;
 }
 
+export interface SiteStep {
+  title: string;
+  body: string;
+  snippet?: string;
+}
+
 export interface SiteConfig {
   /** Display name, e.g. "Acme CLI" */
   name: string;
@@ -37,6 +43,18 @@ export interface SiteConfig {
   example: string;
   /** Optional: tech / query languages this CLI speaks (logo strip) */
   compatible?: string[];
+  /** Optional: features section heading (default: "Everything, from one binary") */
+  featuresTitle?: string;
+  /** Optional: features section subheading */
+  featuresSubtitle?: string;
+  /** Optional: CTA band body (default mentions installing the binary) */
+  ctaBody?: string;
+  /** Optional: per-site accent expressed as an OKLCH color */
+  accent?: string;
+  /** Optional: human-readable accent name */
+  accentName?: string;
+  /** Optional: three-step getting-started sequence */
+  steps?: SiteStep[];
 }
 
 export const site: SiteConfig = {
@@ -45,10 +63,30 @@ export const site: SiteConfig = {
   repo: 'piyush-gambhir/nginxpm-cli',
   tagline: 'Nginx Proxy Manager from your terminal',
   description:
-    'A fast, scriptable CLI for proxy hosts, redirections, streams, certificates, access lists, users, audit logs, and settings — built for humans and coding agents.',
+    'A fast, scriptable CLI for proxy hosts, redirections, streams, certificates, access lists, users, audit logs, and settings, built for humans and coding agents.',
   badge: 'Open-source · macOS, Linux & Windows',
+  accent: 'oklch(0.75 0.15 150)',
+  accentName: 'green',
   installCommand:
     'curl -sSfL https://raw.githubusercontent.com/piyush-gambhir/nginxpm-cli/main/install.sh | sh',
+  steps: [
+    {
+      title: 'Install',
+      body: 'Install the binary, authenticate, and start querying. No runtime, no dependencies.',
+      snippet:
+        'curl -sSfL https://raw.githubusercontent.com/piyush-gambhir/nginxpm-cli/main/install.sh | sh',
+    },
+    {
+      title: 'Configure without an interactive login',
+      body: 'Log in with an NPM URL, email, and password, or use environment variables and named profiles for automation.',
+      snippet: 'export NGINXPM_URL=https://npm.example.com',
+    },
+    {
+      title: 'Inspect and manage the instance',
+      body: 'Manage redirection hosts, TCP/UDP streams, 404 dead hosts, and access lists alongside reverse proxies.',
+      snippet: 'nginxpm status -o json',
+    },
+  ],
   features: [
     {
       icon: Search,
@@ -99,3 +137,13 @@ nginxpm proxy list -o json`,
     "NPM API",
   ],
 };
+
+export const repositoryUrl = `https://github.com/${site.repo}`;
+export const licenseUrl = `${repositoryUrl}/blob/main/LICENSE`;
+export const projectDescription =
+  'nginxpm CLI is an independent, unofficial open-source command-line interface for managing Nginx Proxy Manager from the terminal.';
+export const structuredDataDescription = `${projectDescription} Manage proxy hosts, streams, certificates, access lists, users, audit logs, and settings with scriptable output.`;
+export const siteMetadataDescription =
+  'Independent, unofficial nginxpm CLI. Agent-ready and harness-agnostic, with JSON/YAML, read-only mode, and no-input flags for hosts, streams, and certificates.';
+export const siteSocialDescription =
+  'nginxpm lets any shell-capable coding agent or harness manage NPM hosts, streams, and certificates with JSON/YAML, read-only mode, and no-input flags.';

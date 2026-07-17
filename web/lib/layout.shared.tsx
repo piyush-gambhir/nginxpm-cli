@@ -1,5 +1,4 @@
 import type { BaseLayoutProps } from 'fumadocs-ui/layouts/shared';
-import { Terminal } from 'lucide-react';
 import { appName, gitConfig } from './shared';
 
 export function baseOptions(): BaseLayoutProps {
@@ -7,8 +6,8 @@ export function baseOptions(): BaseLayoutProps {
     nav: {
       title: (
         <>
-          <Terminal className="size-4.5" />
-          <span className="font-semibold">{appName}</span>
+          <span className="docs-nav__prompt" aria-hidden>&gt;_</span>
+          <span className="docs-nav__wordmark">{appName}</span>
         </>
       ),
     },

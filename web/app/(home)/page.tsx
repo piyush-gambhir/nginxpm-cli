@@ -1,144 +1,253 @@
+import { HomeHero } from '@/components/home-hero';
 import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { InstallCommand } from '@/components/install-command';
-import { HeroTerminal } from '@/components/hero-terminal';
+import { Reveal } from '@/components/reveal';
 import { SiteFooter } from '@/components/site-footer';
-import { site } from '@/lib/site';
+import {
+  licenseUrl,
+  repositoryUrl,
+  site,
+  structuredDataDescription,
+  type SiteStep,
+} from '@/lib/site';
+import { siteUrl } from '@/lib/shared';
+import { getOtherSuiteProjects } from '@/lib/suite';
+
+const revealDelays = ['0s', '0.075s', '0.15s'] as const;
+const contextualBodyLinks: Record<
+  string,
+  { href: string; text: string }
+> = {
+  Install: {
+    href: '/docs/installation',
+    text: 'Install the binary',
+  },
+  'Configure without an interactive login': {
+    href: '/docs/authentication',
+    text: 'Log in with an NPM URL, email, and password',
+  },
+  'Inspect and manage the instance': {
+    href: '/docs/commands',
+    text: 'Manage redirection hosts, TCP/UDP streams, 404 dead hosts, and access lists',
+  },
+  'Proxy hosts': {
+    href: '/docs/commands/hosts',
+    text: 'Nginx Proxy Manager proxy hosts',
+  },
+  'Simple connection setup': {
+    href: '/docs/authentication',
+    text: 'environment variables and named profiles',
+  },
+  'Agent-friendly': {
+    href: '/docs/agents',
+    text: '-o json|yaml',
+  },
+  'Every traffic route': {
+    href: '/docs/commands/streams-certificates-access',
+    text: 'TCP/UDP streams',
+  },
+  'Certificate workflows': {
+    href: '/docs/commands/streams-certificates-access',
+    text: 'SSL certificates',
+  },
+  'Complete administration': {
+    href: '/docs/commands/administration',
+    text: 'users and permissions',
+  },
+};
 
 export default function HomePage() {
-  const repoUrl = `https://github.com/${site.repo}`;
+  const firstExampleCommand =
+    site.example
+      .split('\n')
+      .find((line) => line.trim() && !line.trimStart().startsWith('#')) ??
+    `${site.binary} --help`;
+  const fallbackSteps: SiteStep[] = [
+    {
+      title: 'Install',
+      body: `Install ${site.name} and make the binary available from your shell.`,
+      snippet: site.installCommand,
+    },
+    {
+      title: 'Authenticate',
+      body: `Connect ${site.binary} to your account with the credentials your deployment supports.`,
+      snippet: `${site.binary} auth login`,
+    },
+    {
+      title: 'Run',
+      body: 'Start with a real command, then compose it into scripts and agent workflows.',
+      snippet: firstExampleCommand,
+    },
+  ];
+  const steps = site.steps?.length ? site.steps : fallbackSteps;
+  const relatedLinks = getOtherSuiteProjects(site.repo).map(({ href }) => href);
+  const softwareApplication = {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareApplication',
+    '@id': `${siteUrl}/#software-application`,
+    name: site.name,
+    applicationCategory: 'DeveloperApplication',
+    operatingSystem: ['macOS', 'Linux', 'Windows'],
+    license: licenseUrl,
+    url: siteUrl,
+    sameAs: [repositoryUrl],
+    description: structuredDataDescription,
+    relatedLink: relatedLinks,
+    featureList: [
+      'Structured JSON and YAML output for coding agents',
+      'Read-only safety mode',
+      'Non-interactive automation flags',
+      'Works with any coding agent or agent harness that can run shell commands',
+    ],
+    keywords: [
+      'coding agent',
+      'AI agent CLI',
+      'agent harness',
+      'MCP-free shell integration',
+      'terminal automation',
+      'nginxpm automation',
+    ],
+  };
+  const website = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    '@id': `${siteUrl}/#website`,
+    name: site.name,
+    url: siteUrl,
+    inLanguage: 'en',
+    sameAs: [repositoryUrl],
+    description: structuredDataDescription,
+    relatedLink: relatedLinks,
+  };
 
   return (
-    <main className="flex flex-1 flex-col">
-      {/* Hero */}
-      <section className="relative overflow-hidden">
-        {/* soft gradient aurora */}
-        <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
-          <div
-            className="absolute left-1/2 top-[-12%] size-[36rem] -translate-x-1/2 rounded-full blur-[80px]"
-            style={{
-              background:
-                'radial-gradient(circle, color-mix(in oklab, var(--color-amber-300) 22%, transparent), transparent 70%)',
-            }}
-          />
-          <div
-            className="absolute right-[8%] top-[4%] size-[22rem] rounded-full blur-[80px]"
-            style={{
-              background:
-                'radial-gradient(circle, color-mix(in oklab, var(--color-sky-400) 18%, transparent), transparent 72%)',
-            }}
-          />
-        </div>
+    <main className="osmo-home flex flex-1 flex-col">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(softwareApplication) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(website) }}
+      />
+      <HomeHero />
 
-        <div className="mx-auto flex max-w-5xl flex-col items-center px-4 pt-36 pb-20 text-center sm:pt-44">
-          <h1 className="max-w-4xl text-balance text-5xl font-semibold leading-[1.05] tracking-tight sm:text-7xl">
-            {site.tagline}
-          </h1>
-          <p className="mt-6 max-w-2xl text-pretty text-lg leading-relaxed text-muted-foreground">
-            {site.description}
-          </p>
+      {/* Getting started */}
+      <section className="osmo-section osmo-section--steps">
+        <div className="osmo-container">
+          <Reveal className="osmo-section__header">
+            <h2 className="osmo-section__title">
+              Up and running in three moves
+            </h2>
+          </Reveal>
 
-          <div className="mt-9 flex flex-col items-center gap-5">
-            <div className="flex flex-wrap items-center justify-center gap-3">
-              <Button size="lg" render={<Link href="/docs" />}>
-                Get started
-                <ArrowRight className="size-4" />
-              </Button>
-              <Button
-                size="lg"
-                variant="secondary"
-                render={<Link href={repoUrl} />}
+          <div className="osmo-card-grid osmo-card-grid--steps">
+            {steps.map(({ title, body, snippet }, index) => (
+              <Reveal
+                key={`${title}-${index}`}
+                delay={revealDelays[index % revealDelays.length]}
+                className="osmo-card osmo-step-card"
               >
-                View on GitHub
-              </Button>
-            </div>
-            <InstallCommand command={site.installCommand} />
-          </div>
-
-          {/* Signature terminal visual */}
-          <HeroTerminal
-            title={site.exampleTitle}
-            command={site.example}
-            className="mt-16 w-full max-w-3xl text-left"
-          />
-        </div>
-      </section>
-
-      {/* Stack strip */}
-      {site.compatible && site.compatible.length > 0 ? (
-        <section className="mx-auto w-full max-w-5xl px-4 py-12">
-          <p className="text-center text-xs font-medium uppercase tracking-widest text-muted-foreground/80">
-            Speaks the language of your stack
-          </p>
-          <div className="mt-7 flex flex-wrap items-center justify-center gap-x-10 gap-y-4">
-            {site.compatible.map((item) => (
-              <span
-                key={item}
-                className="font-mono text-sm font-medium text-fd-foreground/60"
-              >
-                {item}
-              </span>
+                <span className="osmo-eyebrow osmo-card__number">
+                  {String(index + 1).padStart(2, '0')}
+                </span>
+                <h3 className="osmo-card__title">{title}</h3>
+                <p className="osmo-card__body">
+                  <ContextualBody body={body} link={contextualBodyLinks[title]} />
+                </p>
+                {snippet ? (
+                  <code className="osmo-card__snippet">
+                    <span aria-hidden>$</span>
+                    {snippet}
+                  </code>
+                ) : null}
+              </Reveal>
             ))}
           </div>
-        </section>
-      ) : null}
-
-      {/* Features */}
-      <section className="mx-auto w-full max-w-5xl px-4 py-24">
-        <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-            Everything, from one binary
-          </h2>
-          <p className="mt-4 text-lg text-muted-foreground">
-            Built for humans at the keyboard and coding agents alike.
-          </p>
-        </div>
-
-        <div className="mt-16 grid gap-x-10 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
-          {site.features.map(({ icon: Icon, title, body }) => (
-            <div key={title} className="group">
-              <div className="mb-4 flex size-11 items-center justify-center rounded-2xl bg-fd-muted text-fd-foreground transition-colors group-hover:bg-fd-primary group-hover:text-fd-primary-foreground">
-                <Icon className="size-5" />
-              </div>
-              <h3 className="text-base font-semibold">{title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                {body}
-              </p>
-            </div>
-          ))}
         </div>
       </section>
 
-      {/* CTA band */}
-      <section className="mx-auto w-full max-w-5xl px-4 pb-28">
-        <div className="relative overflow-hidden rounded-[2rem] bg-fd-muted/50 px-6 py-20 text-center">
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-48"
-            style={{
-              background:
-                'radial-gradient(60% 100% at 50% 0%, color-mix(in oklab, var(--color-amber-200) 40%, transparent), transparent)',
-            }}
-          />
-          <h2 className="mx-auto max-w-xl text-3xl font-semibold tracking-tight sm:text-4xl">
-            Ready in one command
-          </h2>
-          <p className="mx-auto mt-4 max-w-md text-lg text-muted-foreground">
-            Install the binary, authenticate, and start querying. No runtime, no
-            dependencies.
-          </p>
-          <div className="mt-9 flex flex-col items-center gap-5">
-            <InstallCommand command={site.installCommand} />
-            <Button render={<Link href="/docs" />}>
-              Read the docs
-              <ArrowRight className="size-4" />
-            </Button>
+      {/* Capabilities */}
+      <section
+        className="osmo-section osmo-section--features"
+        data-theme-section="dark"
+        aria-labelledby="capabilities-heading"
+      >
+        <div className="osmo-container">
+          <Reveal className="osmo-section__header">
+            <h2 id="capabilities-heading" className="osmo-section__title">
+              {site.featuresTitle ?? 'Everything, from one binary'}
+            </h2>
+            <p className="osmo-section__subtitle">
+              {site.featuresSubtitle ??
+                'Built for humans at the keyboard and coding agents alike.'}
+            </p>
+          </Reveal>
+
+          <div className="osmo-card-grid osmo-card-grid--features">
+            {site.features.map(({ title, body }, index) => (
+              <Reveal
+                key={title}
+                delay={revealDelays[index % revealDelays.length]}
+                className="osmo-card osmo-feature-card"
+              >
+                <span className="osmo-eyebrow osmo-card__number">
+                  {String(index + 1).padStart(2, '0')}
+                </span>
+                <h3 className="osmo-card__title">{title}</h3>
+                <p className="osmo-card__body">
+                  <ContextualBody body={body} link={contextualBodyLinks[title]} />
+                </p>
+              </Reveal>
+            ))}
           </div>
+
+          {site.compatible?.length ? (
+            <Reveal className="compatible-marquee">
+              <div className="compatible-marquee__track">
+                {[false, true].map((hidden) => (
+                  <span
+                    className="compatible-marquee__list"
+                    aria-hidden={hidden || undefined}
+                    key={String(hidden)}
+                  >
+                    {site.compatible?.map((item) => (
+                      <span className="compatible-marquee__item" key={item}>
+                        {item}
+                        <span aria-hidden>{' · '}</span>
+                      </span>
+                    ))}
+                  </span>
+                ))}
+              </div>
+            </Reveal>
+          ) : null}
         </div>
       </section>
 
       <SiteFooter />
     </main>
   );
+}
+
+function ContextualBody({
+  body,
+  link,
+}: {
+  body: string;
+  link?: { href: string; text: string };
+}) {
+  const linkStart = link ? body.indexOf(link.text) : -1;
+  if (!link || linkStart < 0) return body;
+
+  return (
+    <>
+      {body.slice(0, linkStart)}
+      <Link href={link.href}>{link.text}</Link>
+      {body.slice(linkStart + link.text.length)}
+    </>
+  );
+}
+
+function serializeJsonLd(value: object): string {
+  return JSON.stringify(value).replace(/</g, '\\u003c');
 }

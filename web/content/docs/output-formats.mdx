@@ -5,9 +5,9 @@ description: Use table, json, and yaml output from nginxpm CLI read commands.
 
 Add `-o <format>` to list and get commands:
 
-- `-o table` — default, human-readable output
-- `-o json` — JSON for tools such as `jq`
-- `-o yaml` — YAML output
+- `-o table`: default, human-readable output
+- `-o json`: JSON for tools such as `jq`
+- `-o yaml`: YAML output
 
 <Callout type="info">
   **Agents: use `-o json` for data you need to parse.** The `--quiet` flag
@@ -46,3 +46,5 @@ nginxpm access create -f - < access.json
   output setting.
 - `--quiet` (`-q`) suppresses informational output from mutating commands.
 - `--verbose` (`-v`) enables verbose HTTP logging when troubleshooting.
+
+For safe machine-driven workflows, continue with the [agents guide](/docs/agents).
