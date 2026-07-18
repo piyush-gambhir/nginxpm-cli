@@ -7,15 +7,15 @@ import { siteUrl } from '@/lib/shared';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-const fontBuffer = async (name: string) => {
-  const data = await readFile(join(process.cwd(), 'fonts', name));
+const fontBuffer = async (...fontPath: string[]) => {
+  const data = await readFile(join(process.cwd(), 'node_modules', ...fontPath));
   return data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength) as ArrayBuffer;
 };
 
 export const revalidate = false;
 
-const hafferXH = fontBuffer('haffer-xh-regular-2.ttf');
-const hafferMono = fontBuffer('haffer-mono-medium-2.ttf');
+const inter = fontBuffer('@fontsource', 'inter', 'files', 'inter-latin-400-normal.woff');
+const jetbrainsMono = fontBuffer('@fontsource', 'jetbrains-mono', 'files', 'jetbrains-mono-latin-500-normal.woff');
 
 export async function GET(_req: Request, { params }: RouteContext<'/og/docs/[...slug]'>) {
   const { slug } = await params;
@@ -33,12 +33,12 @@ export async function GET(_req: Request, { params }: RouteContext<'/og/docs/[...
         padding: '68px 72px',
         color: '#f3f4f1',
         background: '#131412',
-        fontFamily: 'Haffer XH',
+        fontFamily: 'Inter',
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-        <span style={{ color: '#55cf79', fontFamily: 'Haffer Mono', fontSize: 30 }}>&gt;_</span>
-        <span style={{ color: '#b6b8b3', fontFamily: 'Haffer Mono', fontSize: 24 }}>{site.binary}</span>
+        <span style={{ color: '#55cf79', fontFamily: 'JetBrains Mono', fontSize: 30 }}>&gt;_</span>
+        <span style={{ color: '#b6b8b3', fontFamily: 'JetBrains Mono', fontSize: 24 }}>{site.binary}</span>
       </div>
       <div
         style={{
@@ -50,7 +50,7 @@ export async function GET(_req: Request, { params }: RouteContext<'/og/docs/[...
           background: '#1e201b',
         }}
       >
-        <div style={{ color: '#55cf79', fontFamily: 'Haffer Mono', fontSize: 21, letterSpacing: '0.12em' }}>
+        <div style={{ color: '#55cf79', fontFamily: 'JetBrains Mono', fontSize: 21, letterSpacing: '0.12em' }}>
           DOCUMENTATION
         </div>
         <div style={{ maxWidth: 980, fontSize: 66, lineHeight: 0.98, letterSpacing: '-0.045em' }}>
@@ -60,7 +60,7 @@ export async function GET(_req: Request, { params }: RouteContext<'/og/docs/[...
           {page.data.description}
         </div>
       </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', color: '#7f827b', fontFamily: 'Haffer Mono', fontSize: 19 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', color: '#7f827b', fontFamily: 'JetBrains Mono', fontSize: 19 }}>
         <span>{site.name}</span>
         <span>{`${siteUrl}/docs`}</span>
       </div>
@@ -69,8 +69,8 @@ export async function GET(_req: Request, { params }: RouteContext<'/og/docs/[...
       width: 1200,
       height: 630,
       fonts: [
-        { name: 'Haffer XH', data: await hafferXH, weight: 400 },
-        { name: 'Haffer Mono', data: await hafferMono, weight: 500 },
+        { name: 'Inter', data: await inter, weight: 400 },
+        { name: 'JetBrains Mono', data: await jetbrainsMono, weight: 500 },
       ],
     },
   );

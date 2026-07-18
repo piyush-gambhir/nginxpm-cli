@@ -58,10 +58,13 @@
 }
 
 @theme inline {
-  --font-sans: var(--font-haffer-vf);
-  --font-display: var(--font-haffer-xh);
-  --font-mono: var(--font-haffer-mono);
-  --font-scribble: var(--font-brisa);
+  --font-inter: 'Inter Variable', Inter, Arial, sans-serif;
+  --font-jetbrains-mono: 'JetBrains Mono Variable', 'JetBrains Mono', monospace;
+  --font-instrument-serif: 'Instrument Serif', Georgia, serif;
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-inter);
+  --font-mono: var(--font-jetbrains-mono);
+  --font-scribble: var(--font-instrument-serif);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -287,7 +290,7 @@
 }
 
 body {
-  font-family: var(--font-haffer-vf), Arial, sans-serif;
+  font-family: var(--font-inter), Arial, sans-serif;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 }
@@ -565,7 +568,7 @@ body {
   border-radius: var(--radius-round);
   color: var(--foreground);
   background: var(--card);
-  font-family: var(--font-haffer-mono), monospace;
+  font-family: var(--font-jetbrains-mono), monospace;
   font-size: 0.875em;
   line-height: 1.2em;
   text-align: left;
@@ -602,7 +605,7 @@ body {
 
 .osmo-eyebrow {
   color: var(--site-accent);
-  font-family: var(--font-haffer-mono), monospace;
+  font-family: var(--font-jetbrains-mono), monospace;
   font-size: 0.6875em;
   line-height: 1;
   letter-spacing: 0.14em;
@@ -628,7 +631,7 @@ body {
 
 .osmo-home-hero__title {
   max-width: 12em;
-  font-family: var(--font-haffer-xh), Arial, sans-serif;
+  font-family: var(--font-inter), Arial, sans-serif;
   font-size: 7em;
   font-weight: 400;
   line-height: 1;
@@ -697,7 +700,7 @@ body {
   overflow-x: auto;
   margin: 0;
   padding: 1.5em;
-  font-family: var(--font-haffer-mono), monospace;
+  font-family: var(--font-jetbrains-mono), monospace;
   font-size: 0.875em;
   line-height: 1.2em;
   text-align: left;
@@ -720,7 +723,7 @@ body {
 .osmo-section__title {
   max-width: 12em;
   margin-top: var(--gap-m);
-  font-family: var(--font-haffer-xh), Arial, sans-serif;
+  font-family: var(--font-inter), Arial, sans-serif;
   font-size: 5em;
   font-weight: 400;
   line-height: 1;
@@ -751,7 +754,7 @@ body {
 
 .osmo-card__title {
   margin-top: auto;
-  font-family: var(--font-haffer-xh), Arial, sans-serif;
+  font-family: var(--font-inter), Arial, sans-serif;
   font-size: 1.875em;
   font-weight: 400;
   line-height: 1.08;
@@ -784,7 +787,7 @@ body {
   padding: 0.75em;
   border-radius: 3px;
   background: var(--color-neutral-300);
-  font-family: var(--font-haffer-mono), monospace;
+  font-family: var(--font-jetbrains-mono), monospace;
   font-size: 0.6875em;
   line-height: 1;
   text-overflow: ellipsis;
@@ -810,7 +813,7 @@ body {
   flex: none;
   align-items: center;
   padding-block: 1em;
-  font-family: var(--font-haffer-mono), monospace;
+  font-family: var(--font-jetbrains-mono), monospace;
   font-size: 0.6875em;
   line-height: 1;
   letter-spacing: 0.14em;
@@ -904,7 +907,7 @@ body {
 
 .nav-menu__eyebrow {
   color: var(--color-neutral-500);
-  font-family: var(--font-haffer-mono), monospace;
+  font-family: var(--font-jetbrains-mono), monospace;
   font-size: 0.6875em;
   line-height: 1;
   letter-spacing: 0.14em;
@@ -945,7 +948,7 @@ body {
 .site-footer__eyebrow,
 .site-footer__group-toggle {
   color: var(--site-accent);
-  font-family: var(--font-haffer-mono), monospace;
+  font-family: var(--font-jetbrains-mono), monospace;
   font-size: 0.6875em;
   line-height: 1;
   letter-spacing: 0.14em;
@@ -955,7 +958,7 @@ body {
 .site-footer__start h2 {
   max-width: 12em;
   margin-top: var(--gap-xs);
-  font-family: var(--font-haffer-xh), Arial, sans-serif;
+  font-family: var(--font-inter), Arial, sans-serif;
   font-size: 2.5em;
   font-weight: 400;
   line-height: 1.05;
@@ -1014,7 +1017,7 @@ body {
   width: 100%;
   margin: 0;
   color: var(--foreground);
-  font-family: var(--font-haffer-xh), Arial, sans-serif;
+  font-family: var(--font-inter), Arial, sans-serif;
   font-size: 9.375em;
   font-weight: 400;
   line-height: 0.9;
@@ -1028,7 +1031,7 @@ body {
   width: 100%;
   max-width: var(--size-container);
   padding: 0 var(--container-padding);
-  font-family: var(--font-haffer-mono), monospace;
+  font-family: var(--font-jetbrains-mono), monospace;
   font-size: 0.6875em;
   line-height: 1;
   letter-spacing: 0;
@@ -1160,7 +1163,7 @@ html[data-lenis] {
   border-radius: 2px;
   color: oklch(0.145 0 0);
   background: transparent;
-  font-family: var(--font-haffer-vf), Arial, sans-serif;
+  font-family: var(--font-inter), Arial, sans-serif;
   font-size: 1em;
   line-height: 1.25;
   font-weight: 500;
@@ -1364,7 +1367,7 @@ html[data-lenis] {
   position: relative;
   width: 100%;
   color: oklch(0.985 0 0);
-  font-family: var(--font-haffer-vf), Arial, sans-serif;
+  font-family: var(--font-inter), Arial, sans-serif;
   pointer-events: auto;
 }
 
@@ -1977,7 +1980,7 @@ html[data-lenis] {
 
 .marketing-shell .nav-menu__eyebrow {
   color: var(--color-neutral-500);
-  font-family: var(--font-haffer-mono), monospace;
+  font-family: var(--font-jetbrains-mono), monospace;
   font-size: 0.6875em;
   line-height: 1;
   letter-spacing: 0.14em;
@@ -2018,7 +2021,7 @@ html[data-lenis] {
 .marketing-shell .site-footer__eyebrow,
 .marketing-shell .site-footer__group-toggle {
   color: var(--site-accent);
-  font-family: var(--font-haffer-mono), monospace;
+  font-family: var(--font-jetbrains-mono), monospace;
   font-size: 0.6875em;
   line-height: 1;
   letter-spacing: 0.14em;
@@ -2028,7 +2031,7 @@ html[data-lenis] {
 .marketing-shell .site-footer__start h2 {
   max-width: 12em;
   margin-top: var(--gap-xs);
-  font-family: var(--font-haffer-xh), Arial, sans-serif;
+  font-family: var(--font-inter), Arial, sans-serif;
   font-size: 2.5em;
   font-weight: 400;
   line-height: 1.05;
@@ -2087,7 +2090,7 @@ html[data-lenis] {
   width: 100%;
   margin: 0;
   color: var(--foreground);
-  font-family: var(--font-haffer-xh), Arial, sans-serif;
+  font-family: var(--font-inter), Arial, sans-serif;
   font-size: 9.375em;
   font-weight: 400;
   line-height: 0.9;
@@ -2101,7 +2104,7 @@ html[data-lenis] {
   width: 100%;
   max-width: var(--size-container);
   padding: 0 var(--container-padding);
-  font-family: var(--font-haffer-mono), monospace;
+  font-family: var(--font-jetbrains-mono), monospace;
   font-size: 0.6875em;
   line-height: 1;
   letter-spacing: 0;
@@ -2545,7 +2548,7 @@ button:focus-visible {
 .nav-menu-link__index {
   margin-right: 0.625em;
   color: var(--site-accent);
-  font-family: var(--font-haffer-mono), monospace;
+  font-family: var(--font-jetbrains-mono), monospace;
   font-size: 0.6875em;
   letter-spacing: 0.08em;
   vertical-align: 0.1em;
@@ -2559,7 +2562,7 @@ button:focus-visible {
 .docs-shell {
   color: var(--foreground);
   background: var(--surface-page);
-  font-family: var(--font-haffer-vf), Arial, sans-serif;
+  font-family: var(--font-inter), Arial, sans-serif;
   font-variation-settings: 'wght' 420;
 }
 
@@ -2593,16 +2596,16 @@ button:focus-visible {
 .docs-shell [data-search-full] kbd {
   border: 0;
   background: var(--surface-top);
-  font-family: var(--font-haffer-mono), monospace;
+  font-family: var(--font-jetbrains-mono), monospace;
 }
 
 .docs-nav__prompt {
   color: var(--site-accent);
-  font-family: var(--font-haffer-mono), monospace;
+  font-family: var(--font-jetbrains-mono), monospace;
 }
 
 .docs-nav__wordmark {
-  font-family: var(--font-haffer-mono), monospace;
+  font-family: var(--font-jetbrains-mono), monospace;
   font-weight: 500;
   letter-spacing: -0.02em;
 }
@@ -2611,7 +2614,7 @@ button:focus-visible {
 
 .docs-page__title {
   max-width: 18ch;
-  font-family: var(--font-haffer-xh), Arial, sans-serif;
+  font-family: var(--font-inter), Arial, sans-serif;
   font-size: clamp(2.75rem, 7vw, 4.5rem);
   font-weight: 400;
   line-height: 0.98;
@@ -2628,7 +2631,7 @@ button:focus-visible {
 }
 
 .docs-page__actions { margin-top: 0.25rem; }
-.docs-page__actions :is(button, a) { font-family: var(--font-haffer-mono), monospace; }
+.docs-page__actions :is(button, a) { font-family: var(--font-jetbrains-mono), monospace; }
 
 .docs-page__body {
   color: var(--foreground);
@@ -2638,14 +2641,14 @@ button:focus-visible {
 
 .docs-page__body :is(h2, h3, h4) {
   color: var(--foreground);
-  font-family: var(--font-haffer-xh), Arial, sans-serif;
+  font-family: var(--font-inter), Arial, sans-serif;
   font-weight: 400;
   letter-spacing: -0.035em;
 }
 
 .docs-page__body h2 { font-size: 2rem; line-height: 1.05; }
 .docs-page__body h3 { font-size: 1.45rem; line-height: 1.1; }
-.docs-page__body :is(code, pre, kbd) { font-family: var(--font-haffer-mono), monospace; }
+.docs-page__body :is(code, pre, kbd) { font-family: var(--font-jetbrains-mono), monospace; }
 
 .docs-page__body :not(pre) > code {
   border: 0;
@@ -2682,7 +2685,7 @@ button:focus-visible {
   color: var(--foreground);
   background: var(--surface-low);
   box-shadow: 0 2rem 6rem rgb(0 0 0 / 26%);
-  font-family: var(--font-haffer-vf), Arial, sans-serif;
+  font-family: var(--font-inter), Arial, sans-serif;
 }
 
 .osmo-search-dialog > * { border-color: transparent; }
@@ -2698,14 +2701,14 @@ button:focus-visible {
 
 .osmo-search-dialog__input {
   color: var(--foreground);
-  font-family: var(--font-haffer-vf), Arial, sans-serif;
+  font-family: var(--font-inter), Arial, sans-serif;
   font-variation-settings: 'wght' 450;
 }
 
 .osmo-search-dialog__close {
   border: 0;
   background: var(--surface-top);
-  font-family: var(--font-haffer-mono), monospace;
+  font-family: var(--font-jetbrains-mono), monospace;
 }
 
 .osmo-search-dialog__results { border: 0; }
@@ -2730,7 +2733,7 @@ button:focus-visible {
 
 .legal-page__header h1 {
   max-width: 12ch;
-  font-family: var(--font-haffer-xh), Arial, sans-serif;
+  font-family: var(--font-inter), Arial, sans-serif;
   font-size: clamp(3.5em, 8vw, 6em);
   font-weight: 400;
   line-height: 0.94;
@@ -2740,7 +2743,7 @@ button:focus-visible {
 .legal-page__effective {
   margin-top: var(--gap-m);
   color: var(--site-accent);
-  font-family: var(--font-haffer-mono), monospace;
+  font-family: var(--font-jetbrains-mono), monospace;
   font-size: 0.75em;
   line-height: 1;
   letter-spacing: 0.08em;
@@ -2768,7 +2771,7 @@ button:focus-visible {
 
 .legal-page__content section h2,
 .legal-contact-card h2 {
-  font-family: var(--font-haffer-xh), Arial, sans-serif;
+  font-family: var(--font-inter), Arial, sans-serif;
   font-size: 1.875em;
   font-weight: 400;
   line-height: 1.08;
@@ -2800,7 +2803,7 @@ button:focus-visible {
   border-radius: 0.3em;
   color: var(--site-accent);
   background: var(--surface-top);
-  font-family: var(--font-haffer-mono), monospace;
+  font-family: var(--font-jetbrains-mono), monospace;
   font-size: 0.86em;
 }
 
@@ -2827,7 +2830,7 @@ button:focus-visible {
 
 .legal-contact-card h2 {
   color: var(--site-accent);
-  font-family: var(--font-haffer-mono), monospace;
+  font-family: var(--font-jetbrains-mono), monospace;
   font-size: 0.75em;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -2865,7 +2868,7 @@ button:focus-visible {
   display: inline-flex;
   gap: 0.5em;
   color: var(--foreground);
-  font-family: var(--font-haffer-mono), monospace;
+  font-family: var(--font-jetbrains-mono), monospace;
   font-size: 0.875em;
 }
 
@@ -2879,7 +2882,7 @@ button:focus-visible {
   top: -0.2em;
   right: -0.08em;
   color: var(--surface-raised);
-  font-family: var(--font-haffer-xh), Arial, sans-serif;
+  font-family: var(--font-inter), Arial, sans-serif;
   font-size: 14em;
   line-height: 0.8;
   letter-spacing: -0.08em;
@@ -2889,7 +2892,7 @@ button:focus-visible {
 .not-found-page h1 {
   max-width: 10ch;
   margin-top: var(--padding-xs);
-  font-family: var(--font-haffer-xh), Arial, sans-serif;
+  font-family: var(--font-inter), Arial, sans-serif;
   font-size: 5em;
   font-weight: 400;
   line-height: 0.94;
@@ -2905,7 +2908,7 @@ button:focus-visible {
   border-radius: 8px;
   color: var(--muted-foreground);
   background: var(--surface-raised);
-  font-family: var(--font-haffer-mono), monospace;
+  font-family: var(--font-jetbrains-mono), monospace;
   font-size: 0.875em;
   line-height: 1.35;
 }
