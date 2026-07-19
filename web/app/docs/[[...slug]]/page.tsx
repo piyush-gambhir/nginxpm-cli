@@ -137,8 +137,6 @@ export async function generateMetadata(props: PageProps<'/docs/[[...slug]]'>): P
 
   return createPageMetadata({
     title: page.data.title,
-    summary:
-      page.data.description ?? `Technical documentation for ${page.data.title}.`,
     description,
     path: page.url,
     type: 'article',

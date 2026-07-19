@@ -17,60 +17,68 @@ export function absoluteUrl(path: string): string {
   return `${siteUrl}${path}`;
 }
 
+
+export function createDocsMetadataDescription(title: string): string {
+  return `nginxpm ${title} docs. Harness-agnostic for any coding agent, with JSON/YAML output, read-only mode, and no-input automation.`;
+}
+
+/** Expands a short page summary into this site's full description voice. */
+export function describePage(summary: string): string {
+  return `${summary.trim()} Independent, unofficial nginxpm CLI project.`;
+}
+
+export interface PageMetadataOptions {
+  /** Page title. Used bare for <title>, suffixed with the site name socially. */
+  title: string;
+  /** Page description, used for <meta name="description">. */
+  description: string;
+  /** Optional distinct description for OG/Twitter. Defaults to `description`. */
+  socialDescription?: string;
+  /** Site-relative path, e.g. '/docs/quickstart'. */
+  path: string;
+  /** Site-relative social image path. */
+  image?: string;
+  type?: 'article' | 'website';
+}
+
 export function createPageMetadata({
   title,
-  summary,
   description,
+  socialDescription,
   path,
-  type = 'website',
   image = defaultSocialImage,
-}: {
-  title: string;
-  summary: string;
-  description?: string;
-  path: string;
-  type?: 'article' | 'website';
-  image?: string;
-}): Metadata {
-  const pageDescription =
-    description ??
-    `${summary} Independent, unofficial nginxpm CLI project.`;
+  type = 'website',
+}: PageMetadataOptions): Metadata {
+  const social = socialDescription?.trim() || description;
   const socialTitle = `${title} · ${site.name}`;
-  const canonicalUrl = `${siteUrl}${path}`;
+  const canonicalUrl = absoluteUrl(path);
   const socialImage = {
-    url: `${siteUrl}${image}`,
+    url: absoluteUrl(image),
     width: 1200,
     height: 630,
     alt: `${title} on ${site.name}`,
   };
-  const sharedOpenGraph = {
-    title: socialTitle,
-    description: pageDescription,
-    url: canonicalUrl,
-    siteName: site.name,
-    locale: 'en_US',
-    images: [socialImage],
-  };
 
   return {
     title,
-    description: pageDescription,
+    description,
     alternates: {
       canonical: canonicalUrl,
     },
-    openGraph:
-      type === 'article'
-        ? { ...sharedOpenGraph, type: 'article' }
-        : { ...sharedOpenGraph, type: 'website' },
+    openGraph: {
+      type,
+      url: canonicalUrl,
+      siteName: site.name,
+      locale: 'en_US',
+      title: socialTitle,
+      description: social,
+      images: [socialImage],
+    },
     twitter: {
       card: 'summary_large_image',
       title: socialTitle,
-      description: pageDescription,
+      description: social,
       images: [socialImage],
     },
   };
-}
-
-export function createDocsMetadataDescription(title: string): string {
-  return `nginxpm ${title} docs. Harness-agnostic for any coding agent, with JSON/YAML output, read-only mode, and no-input automation.`;
 }
