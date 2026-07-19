@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { homeSocialImage } from '@/lib/metadata';
 import '@fontsource-variable/inter';
 import '@fontsource-variable/jetbrains-mono';
 import '@fontsource/instrument-serif';
@@ -20,8 +21,14 @@ export const metadata: Metadata = {
     template: `%s · ${site.name}`,
   },
   description: siteMetadataDescription,
+  authors: [{ name: 'Piyush Gambhir', url: 'https://github.com/piyush-gambhir' }],
+  creator: 'Piyush Gambhir',
+  publisher: 'Piyush Gambhir',
   alternates: {
     canonical: siteUrl,
+  },
+  icons: {
+    icon: [{ url: '/nginxpm-cli/favicon.svg', type: 'image/svg+xml' }],
   },
   openGraph: {
     type: 'website',
@@ -30,30 +37,13 @@ export const metadata: Metadata = {
     siteName: site.name,
     title: `${site.name}: ${site.tagline}`,
     description: siteSocialDescription,
-    images: [
-      {
-        url: `${siteUrl}/og/docs/image.png`,
-        width: 1200,
-        height: 630,
-        alt: `${site.name} documentation`,
-      },
-    ],
+    images: [homeSocialImage],
   },
   twitter: {
     card: 'summary_large_image',
     title: `${site.name}: ${site.tagline}`,
     description: siteSocialDescription,
-    images: [
-      {
-        url: `${siteUrl}/og/docs/image.png`,
-        width: 1200,
-        height: 630,
-        alt: `${site.name} documentation`,
-      },
-    ],
-  },
-  icons: {
-    icon: [{ url: '/nginxpm-cli/favicon.svg', type: 'image/svg+xml' }],
+    images: [homeSocialImage],
   },
 };
 

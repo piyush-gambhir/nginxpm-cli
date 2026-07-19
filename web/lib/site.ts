@@ -53,6 +53,8 @@ export interface SiteConfig {
   accent?: string;
   /** Optional: human-readable accent name */
   accentName?: string;
+  /** Optional: hex twin of the accent, for surfaces without oklch() support (OG images) */
+  accentHex?: string;
   /** Optional: three-step getting-started sequence */
   steps?: SiteStep[];
 }
@@ -67,6 +69,7 @@ export const site: SiteConfig = {
   badge: 'Open-source · macOS, Linux & Windows',
   accent: 'oklch(0.75 0.15 150)',
   accentName: 'green',
+  accentHex: '#5dc879',
   installCommand:
     'curl -sSfL https://raw.githubusercontent.com/piyush-gambhir/nginxpm-cli/main/install.sh | sh',
   steps: [
