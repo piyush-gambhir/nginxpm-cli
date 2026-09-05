@@ -34,7 +34,9 @@ There is no Homebrew, apt, Docker, or install-script distribution. Use one of:
 
 ```bash
 # 1. Go toolchain (installs the latest tagged release into $GOBIN / $GOPATH/bin)
-go install github.com/piyush-gambhir/nginxpm-cli@latest
+git clone https://github.com/piyush-gambhir/nginxpm-cli.git
+cd nginxpm-cli/cli-go
+make install
 
 # 2. Prebuilt release binary
 #    Download the archive for your OS/arch from:
