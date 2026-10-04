@@ -46,10 +46,6 @@ sudo mv nginxpm /usr/local/bin/
 ### Alternative (build from source, requires Go)
 
 ```bash
-# Go install
-curl -sSfL https://raw.githubusercontent.com/piyush-gambhir/nginxpm-cli/main/install.sh | sh
-
-# From a checkout
 git clone https://github.com/piyush-gambhir/nginxpm-cli.git
 cd nginxpm-cli/cli-go && make install
 ```
