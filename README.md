@@ -13,7 +13,7 @@ Designed for both human operators and coding agents (LLMs). All commands support
 - Full API coverage -- proxy hosts, redirections, streams, dead hosts, certificates, access lists, users, audit log, settings
 - Multiple output formats -- table, JSON, YAML (`-o json`)
 - Profile management -- multiple NPM instances with `--profile`
-- Auto-update -- checks for new versions, `nginxpm update` to self-update (macOS and Linux; on Windows, download the new release manually)
+- Update notices -- in an interactive terminal, a once-a-day check says when a new release is out; `nginxpm update` installs it on macOS, Linux, and Windows
 - Agent-friendly -- comprehensive help text, structured output for LLM coding agents (`CLAUDE.md` guide, `SKILL.md` for Cursor-style skills)
 - Cross-platform -- macOS, Linux, Windows (amd64 and arm64)
 
@@ -49,6 +49,25 @@ sudo mv nginxpm /usr/local/bin/
 git clone https://github.com/piyush-gambhir/nginxpm-cli.git
 cd nginxpm-cli/cli-go && make install
 ```
+
+### Updating
+
+```bash
+nginxpm update --check   # compare your version with the latest release (add -o json for scripts)
+nginxpm update           # download, verify, and install it (asks first; --yes skips the prompt)
+```
+
+`nginxpm update` works on macOS, Linux, and Windows. It downloads the release archive for your platform, verifies its SHA-256 against the release's `checksums.txt`, and replaces the binary. On Windows the running `nginxpm.exe` is moved aside to `nginxpm.exe.old`, which the next run deletes. If the binary's directory is not writable, re-run with `sudo` or reinstall with the install script into a writable `INSTALL_DIR`. A source build in a Go bin directory (`$GOBIN`, `$GOPATH/bin`, `~/go/bin`) is not replaced: run `git pull && make install` in your clone instead. `--read-only` blocks installing (not `--check`).
+
+In an interactive terminal, nginxpm checks GitHub for a new release at most once a day and, after the command's own output, prints a notice on stderr (once per release per day):
+
+```text
+A new version of nginxpm is available: v0.1.9 -> v0.1.10
+Update with: nginxpm update
+Release notes: https://github.com/piyush-gambhir/nginxpm-cli/releases/tag/v0.1.10
+```
+
+The check is skipped when stderr is not a terminal (pipes, scripts, coding agents), when `CI` is set, with `--quiet`, and for `update`, `version`, `completion`, and `help`. Turn it off with `NGINXPM_NO_UPDATE_NOTIFIER=1` or `NO_UPDATE_NOTIFIER=1`.
 
 ## Quick Start
 
@@ -120,6 +139,7 @@ nginxpm proxy list --profile staging
 | `NGINXPM_NO_INPUT` | Disable interactive prompts |
 | `NGINXPM_QUIET` | Suppress informational output |
 | `NGINXPM_VERBOSE` | Enable verbose HTTP logging |
+| `NGINXPM_NO_UPDATE_NOTIFIER` | Turn off the new-version notice (any value; `NO_UPDATE_NOTIFIER` also works) |
 
 ## Commands
 
@@ -138,7 +158,7 @@ nginxpm proxy list --profile staging
 | `nginxpm login` | Interactive authentication setup | |
 | `nginxpm status` | Show server status (no auth required) | |
 | `nginxpm version` | Print CLI version | |
-| `nginxpm update` | Self-update to latest version (`--check` only on Windows) | |
+| `nginxpm update` | Update to the latest release (`--check` only checks) | |
 | `nginxpm completion` | Generate shell completions | |
 
 ## Proxy Hosts

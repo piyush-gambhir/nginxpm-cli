@@ -1,373 +1,212 @@
 package cmd
 
 import (
-	"archive/tar"
 	"bufio"
-	"compress/gzip"
-	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
-	"time"
 
 	"github.com/spf13/cobra"
+	"golang.org/x/term"
 
 	"github.com/piyush-gambhir/nginxpm-cli/cli-go/internal/build"
 	"github.com/piyush-gambhir/nginxpm-cli/cli-go/internal/config"
+	"github.com/piyush-gambhir/nginxpm-cli/cli-go/internal/output"
 	"github.com/piyush-gambhir/nginxpm-cli/cli-go/internal/update"
 )
 
+// Seams for tests: the target platform, the executable being replaced, and
+// whether stdin can answer a prompt.
+var (
+	goos            = runtime.GOOS
+	goarch          = runtime.GOARCH
+	executablePath  = currentExecutable
+	stdinIsTerminal = func() bool { return term.IsTerminal(int(os.Stdin.Fd())) }
+)
+
+// updateCheckResult is the `update --check -o json|yaml` payload.
+type updateCheckResult struct {
+	CurrentVersion  string `json:"current_version" yaml:"current_version"`
+	LatestVersion   string `json:"latest_version" yaml:"latest_version"`
+	UpdateAvailable bool   `json:"update_available" yaml:"update_available"`
+	ReleaseURL      string `json:"release_url" yaml:"release_url"`
+	InstallMethod   string `json:"install_method" yaml:"install_method"`
+}
+
 func newUpdateCmd() *cobra.Command {
-	var checkOnly bool
+	var checkOnly, yes bool
 
 	cmd := &cobra.Command{
 		Use:         "update",
 		Annotations: map[string]string{"mutates": "true"},
 		Short:       "Update nginxpm to the latest version",
-		Long: `Check for and install the latest version of the nginxpm CLI from GitHub Releases.
+		Long: `Check for and install the latest nginxpm release from GitHub Releases.
 
-On Windows, self-update is not supported: use --check to see whether a newer
-release exists, then download the .zip from the release page and replace nginxpm.exe.`,
+nginxpm update downloads the release archive for this OS and architecture
+(.tar.gz on macOS and Linux, .zip on Windows), verifies it against the
+release's checksums.txt (SHA-256), and replaces the running executable. On
+Windows the running nginxpm.exe is moved aside to nginxpm.exe.old, which the
+next run deletes. If the executable's directory is not writable, re-run with
+sudo (Administrator on Windows) or reinstall into a writable directory. A build
+in a Go bin directory ($GOBIN, $GOPATH/bin, ~/go/bin) is not replaced: update
+it from source with git pull && make install.
+
+--check always asks GitHub and reports the current and latest versions; it
+works with -o json and with --read-only. Installing is blocked by --read-only.
+Without --yes, update asks for confirmation, and fails under --no-input or when
+stdin is not a terminal.
+
+In an interactive terminal, other commands check GitHub for a new release at
+most once a day and print a notice on stderr. The check is skipped when stderr
+is not a terminal, when CI is set, with --quiet, and when
+NGINXPM_NO_UPDATE_NOTIFIER or NO_UPDATE_NOTIFIER is set to any value.
+
+Examples:
+  nginxpm update --check
+  nginxpm update --check -o json
+  nginxpm update
+  nginxpm update --yes`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			configDir := config.ConfigDir()
-			currentVersion := build.Version
-
-			if currentVersion == "dev" {
-				fmt.Fprintln(cmd.OutOrStdout(), "Update checking is not available for development builds.")
-				fmt.Fprintln(cmd.OutOrStdout(), "Build from source or install a release to enable updates.")
-				return nil
-			}
-
-			fmt.Fprintln(cmd.OutOrStdout(), "Checking for updates...")
-			info, err := update.CheckForUpdateFresh(currentVersion, updateRepo, configDir)
-			if err != nil {
-				return fmt.Errorf("checking for updates: %w", err)
-			}
-
-			if checkOnly {
-				if info.Available {
-					update.PrintUpdateNotice(cmd.OutOrStdout(), info)
-				} else {
-					fmt.Fprintf(cmd.OutOrStdout(), "Already up to date (%s)\n", formatVer(currentVersion))
-				}
-				return nil
-			}
-
-			if !info.Available {
-				fmt.Fprintf(cmd.OutOrStdout(), "Already up to date (%s)\n", formatVer(currentVersion))
-				return nil
-			}
-
-			fmt.Fprintf(cmd.OutOrStdout(), "\nUpdate available: %s → %s\n",
-				formatVer(info.CurrentVersion), formatVer(info.LatestVersion))
-			if info.PublishedAt != "" {
-				if t, err := time.Parse(time.RFC3339, info.PublishedAt); err == nil {
-					fmt.Fprintf(cmd.OutOrStdout(), "Published: %s\n", t.Format("January 2, 2006"))
-				}
-			}
-			fmt.Fprintf(cmd.OutOrStdout(), "Release:   %s\n\n", info.ReleaseURL)
-			if err := checkSelfUpdateSupported(info.ReleaseURL); err != nil {
-				return err
-			}
-			if flagNoInput {
-				return fmt.Errorf("update requires confirmation; cannot run with --no-input (use --check to check only)")
-			}
-
-			fmt.Fprint(cmd.OutOrStdout(), "Do you want to update? [y/N] ")
-			var answer string
-			fmt.Fscanln(os.Stdin, &answer)
-			answer = strings.TrimSpace(strings.ToLower(answer))
-			if answer != "y" && answer != "yes" {
-				fmt.Fprintln(cmd.OutOrStdout(), "Update cancelled.")
-				return nil
-			}
-
-			return performUpdate(cmd.Context(), cmd.OutOrStdout(), info.LatestVersion)
+			return runUpdate(cmd, checkOnly, yes)
 		},
 	}
 
-	cmd.Flags().BoolVar(&checkOnly, "check", false, "Only check if an update is available, don't install")
+	cmd.Flags().BoolVar(&checkOnly, "check", false, "Only report whether a newer release exists (always queries GitHub)")
+	cmd.Flags().BoolVarP(&yes, "yes", "y", false, "Install without asking for confirmation")
 
 	return cmd
 }
 
-// goos is the target OS; tests override it to exercise other platforms.
-var goos = runtime.GOOS
-
-// checkSelfUpdateSupported refuses to install on Windows: releases ship a .zip
-// there (not the .tar.gz performUpdate downloads), and a running .exe cannot be
-// replaced in place.
-func checkSelfUpdateSupported(releaseURL string) error {
-	if goos == "windows" {
-		return fmt.Errorf("self-update is not supported on Windows: download nginxpm-cli_windows_%s.zip from %s and replace nginxpm.exe", runtime.GOARCH, releaseURL)
+func runUpdate(cmd *cobra.Command, checkOnly, yes bool) error {
+	out := cmd.OutOrStdout()
+	current := build.Version
+	if !update.IsReleaseVersion(current) {
+		fmt.Fprintf(out, "Update checking is not available for development builds (version %q).\n", current)
+		fmt.Fprintln(out, "Install a release to enable updates.")
+		return nil
 	}
+	format := flagOutput
+	switch format {
+	case "", "table", "json", "yaml":
+	default:
+		return fmt.Errorf("unsupported output format: %s (use table, json, or yaml)", format)
+	}
+	if !checkOnly {
+		if err := checkUpdateAllowed(cmd); err != nil {
+			return err
+		}
+	}
+
+	configDir := config.ConfigDir()
+	info, err := update.CheckForUpdateFresh(current, configDir)
+	if err != nil {
+		return fmt.Errorf("checking for updates: %w", err)
+	}
+	execPath, execErr := executablePath()
+	goInstall := execErr == nil && isGoInstall(execPath)
+
+	if checkOnly {
+		return printUpdateCheck(out, format, info, goInstall)
+	}
+	if !info.Available {
+		fmt.Fprintf(out, "nginxpm v%s is already the latest version.\n", trimV(current))
+		return nil
+	}
+	fmt.Fprintf(out, "Update available: v%s -> v%s\n", trimV(current), info.LatestVersion)
+	if goInstall {
+		fmt.Fprintf(out, "nginxpm in %s was built from source, so it does not replace itself.\n", filepath.Dir(execPath))
+		fmt.Fprintf(out, "Update with: %s\n", update.SourceUpdateCommand)
+		fmt.Fprintf(out, "Release notes: %s\n", info.ReleaseURL)
+		return nil
+	}
+	if execErr != nil {
+		return execErr
+	}
+
+	if !yes {
+		if flagNoInput || !stdinIsTerminal() {
+			return fmt.Errorf("update needs confirmation: pass --yes to install v%s without a prompt", info.LatestVersion)
+		}
+		fmt.Fprint(out, "Update now? [Y/n] ")
+		line, err := bufio.NewReader(cmd.InOrStdin()).ReadString('\n')
+		answer := strings.ToLower(strings.TrimSpace(line))
+		if (err != nil && answer == "") || (answer != "" && answer != "y" && answer != "yes") {
+			fmt.Fprintln(out, "Update cancelled.")
+			return nil
+		}
+	}
+
+	installer := &update.Installer{GOOS: goos, GOARCH: goarch, ExecPath: execPath, Out: out}
+	if err := installer.Install(cmd.Context(), info.LatestVersion); err != nil {
+		return err
+	}
+	update.ClearCache(configDir)
+	fmt.Fprintf(out, "Updated nginxpm v%s -> v%s\n", trimV(current), info.LatestVersion)
+	fmt.Fprintf(out, "Release notes: %s\n", info.ReleaseURL)
 	return nil
 }
 
-func performUpdate(ctx context.Context, w io.Writer, version string) error {
-	osName := runtime.GOOS
-	archName := runtime.GOARCH
-
-	// Build the download URL matching the release asset naming convention.
-	downloadURL := fmt.Sprintf(
-		"https://github.com/%s/releases/download/v%s/nginxpm-cli_%s_%s.tar.gz",
-		updateRepo, version, osName, archName,
-	)
-
-	fmt.Fprintf(w, "Downloading %s...\n", downloadURL)
-
-	// Download to a temp directory.
-	tmpDir, err := os.MkdirTemp("", "nginxpm-cli-update-*")
-	if err != nil {
-		return fmt.Errorf("creating temp directory: %w", err)
+// checkUpdateAllowed applies read-only mode (flag, NGINXPM_READ_ONLY, or the
+// profile's read_only) to installing; `update --check` is always allowed.
+func checkUpdateAllowed(cmd *cobra.Command) error {
+	readOnly := flagReadOnly || envFlagEnabled("NGINXPM_READ_ONLY")
+	if resolved, _, err := loadAndResolveConfig(cmd); err == nil && resolved.ReadOnly {
+		readOnly = true
 	}
-	defer os.RemoveAll(tmpDir)
+	return checkPermissions(cmd, &config.ResolvedConfig{ReadOnly: readOnly})
+}
 
-	archivePath := filepath.Join(tmpDir, "nginxpm-cli.tar.gz")
-	if err := downloadFile(ctx, archivePath, downloadURL); err != nil {
-		return fmt.Errorf("downloading update: %w", err)
+func printUpdateCheck(w io.Writer, format string, info *update.UpdateInfo, goInstall bool) error {
+	method := "self"
+	if goInstall {
+		method = "go"
 	}
-
-	// Download and verify SHA256 checksum.
-	checksumURL := fmt.Sprintf(
-		"https://github.com/%s/releases/download/v%s/checksums.txt",
-		updateRepo, version,
-	)
-	archiveFilename := fmt.Sprintf("nginxpm-cli_%s_%s.tar.gz", osName, archName)
-
-	fmt.Fprintf(w, "Verifying checksum...\n")
-	if err := verifyChecksum(ctx, archivePath, checksumURL, archiveFilename); err != nil {
-		return fmt.Errorf("checksum verification failed: %w", err)
+	if format == "json" || format == "yaml" {
+		return output.Print(w, format, updateCheckResult{
+			CurrentVersion:  trimV(info.CurrentVersion),
+			LatestVersion:   info.LatestVersion,
+			UpdateAvailable: info.Available,
+			ReleaseURL:      info.ReleaseURL,
+			InstallMethod:   method,
+		}, nil)
 	}
-
-	fmt.Fprintf(w, "Extracting...\n")
-
-	// Extract the binary from the tarball.
-	binaryPath, err := extractBinary(archivePath, tmpDir)
-	if err != nil {
-		return fmt.Errorf("extracting update: %w", err)
+	available := "no"
+	if info.Available {
+		available = "yes"
 	}
-
-	// Get path to the currently running executable.
-	execPath, err := os.Executable()
-	if err != nil {
-		return fmt.Errorf("finding current executable: %w", err)
+	fmt.Fprintf(w, "Current version:  v%s\n", trimV(info.CurrentVersion))
+	fmt.Fprintf(w, "Latest version:   v%s\n", info.LatestVersion)
+	fmt.Fprintf(w, "Update available: %s\n", available)
+	if info.Available {
+		fmt.Fprintf(w, "Update with: %s\n", update.UpdateCommand(goInstall))
 	}
-	execPath, err = filepath.EvalSymlinks(execPath)
-	if err != nil {
-		return fmt.Errorf("resolving executable path: %w", err)
-	}
-
-	fmt.Fprintf(w, "Replacing %s...\n", execPath)
-
-	// Atomically replace: copy to a temp file next to the target, then rename.
-	if err := atomicReplace(binaryPath, execPath); err != nil {
-		return fmt.Errorf("replacing binary: %w", err)
-	}
-
-	fmt.Fprintf(w, "Successfully updated to %s!\n", formatVer(version))
+	fmt.Fprintf(w, "Release notes: %s\n", info.ReleaseURL)
 	return nil
 }
 
-func downloadFile(ctx context.Context, dst, url string) error {
-	client := &http.Client{Timeout: 120 * time.Second}
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+// currentExecutable is the running binary with symlinks resolved, so the
+// update replaces the real file rather than a link to it.
+func currentExecutable() (string, error) {
+	exe, err := os.Executable()
 	if err != nil {
-		return err
+		return "", fmt.Errorf("finding current executable: %w", err)
 	}
-	resp, err := client.Do(req)
+	resolved, err := filepath.EvalSymlinks(exe)
 	if err != nil {
-		return err
+		return "", fmt.Errorf("resolving executable path: %w", err)
 	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("download failed with status %d", resp.StatusCode)
-	}
-
-	out, err := os.Create(dst)
-	if err != nil {
-		return err
-	}
-	defer out.Close()
-
-	err = copyUpdatePayload(out, resp.Body)
-	return err
+	return resolved, nil
 }
 
-func extractBinary(archivePath, destDir string) (string, error) {
-	f, err := os.Open(archivePath)
-	if err != nil {
-		return "", err
-	}
-	defer f.Close()
-
-	gz, err := gzip.NewReader(f)
-	if err != nil {
-		return "", fmt.Errorf("opening gzip: %w", err)
-	}
-	defer gz.Close()
-
-	tr := tar.NewReader(gz)
-	for {
-		hdr, err := tr.Next()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return "", fmt.Errorf("reading tar: %w", err)
-		}
-
-		name := filepath.Base(hdr.Name)
-		if name != "nginxpm" && name != "nginxpm-cli" {
-			continue
-		}
-		if hdr.Typeflag != tar.TypeReg {
-			continue
-		}
-
-		// Write to a fixed name so no part of the archive entry reaches the
-		// filesystem path (zip slip).
-		outPath := filepath.Join(destDir, "nginxpm")
-		out, err := os.OpenFile(outPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o755)
-		if err != nil {
-			return "", err
-		}
-		if err := copyUpdatePayload(out, tr); err != nil {
-			out.Close()
-			return "", err
-		}
-		out.Close()
-		return outPath, nil
-	}
-
-	return "", fmt.Errorf("binary not found in archive")
+func isGoInstall(execPath string) bool {
+	home, _ := os.UserHomeDir()
+	return update.IsGoInstall(execPath, os.Getenv, home)
 }
 
-func atomicReplace(src, dst string) error {
-	// Preserve the permissions of the destination file.
-	dstInfo, err := os.Stat(dst)
-	if err != nil {
-		return fmt.Errorf("stat destination: %w", err)
-	}
-	dstMode := dstInfo.Mode()
-
-	// Create a temporary file in the same directory as the destination
-	// so that os.Rename works (same filesystem).
-	dstDir := filepath.Dir(dst)
-	tmpFile, err := os.CreateTemp(dstDir, ".nginxpm-update-*")
-	if err != nil {
-		return fmt.Errorf("creating temp file: %w", err)
-	}
-	tmpPath := tmpFile.Name()
-
-	// Clean up the temp file on error.
-	defer func() {
-		if tmpPath != "" {
-			os.Remove(tmpPath)
-		}
-	}()
-
-	// Copy the new binary to the temp file.
-	srcFile, err := os.Open(src)
-	if err != nil {
-		tmpFile.Close()
-		return fmt.Errorf("opening new binary: %w", err)
-	}
-
-	if err := copyUpdatePayload(tmpFile, srcFile); err != nil {
-		srcFile.Close()
-		tmpFile.Close()
-		return fmt.Errorf("copying new binary: %w", err)
-	}
-	srcFile.Close()
-
-	if err := tmpFile.Chmod(dstMode); err != nil {
-		tmpFile.Close()
-		return fmt.Errorf("setting permissions: %w", err)
-	}
-
-	if err := tmpFile.Close(); err != nil {
-		return fmt.Errorf("closing temp file: %w", err)
-	}
-
-	// Atomic rename.
-	if err := os.Rename(tmpPath, dst); err != nil {
-		return fmt.Errorf("renaming: %w (you may need to run with sudo)", err)
-	}
-
-	// Clear tmpPath so the deferred cleanup doesn't remove the installed binary.
-	tmpPath = ""
-	return nil
-}
-
-// verifyChecksum downloads checksums.txt from the release, finds the expected
-// SHA256 for the given filename, and compares it against the actual file hash.
-func verifyChecksum(ctx context.Context, filePath, checksumURL, expectedFilename string) error {
-	client := &http.Client{Timeout: 30 * time.Second}
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, checksumURL, nil)
-	if err != nil {
-		return err
-	}
-	resp, err := client.Do(req)
-	if err != nil {
-		return fmt.Errorf("downloading checksums: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("checksums download failed with status %d", resp.StatusCode)
-	}
-
-	// Parse checksums.txt to find the expected hash.
-	// Format: "<sha256>  <filename>"
-	var expectedHash string
-	scanner := bufio.NewScanner(resp.Body)
-	for scanner.Scan() {
-		line := scanner.Text()
-		parts := strings.Fields(line)
-		if len(parts) == 2 && parts[1] == expectedFilename {
-			expectedHash = parts[0]
-			break
-		}
-	}
-	if err := scanner.Err(); err != nil {
-		return fmt.Errorf("reading checksums: %w", err)
-	}
-	if expectedHash == "" {
-		return fmt.Errorf("no checksum found for %s in checksums.txt", expectedFilename)
-	}
-
-	// Compute SHA256 of the downloaded file.
-	f, err := os.Open(filePath)
-	if err != nil {
-		return fmt.Errorf("opening file for checksum: %w", err)
-	}
-	defer f.Close()
-
-	h := sha256.New()
-	if err := copyUpdatePayload(h, f); err != nil {
-		return fmt.Errorf("computing checksum: %w", err)
-	}
-	actualHash := hex.EncodeToString(h.Sum(nil))
-
-	if !strings.EqualFold(actualHash, expectedHash) {
-		return fmt.Errorf("SHA256 mismatch: expected %s, got %s", expectedHash, actualHash)
-	}
-
-	return nil
-}
-
-func formatVer(v string) string {
-	if strings.HasPrefix(v, "v") {
-		return v
-	}
-	return "v" + v
+func trimV(v string) string {
+	return strings.TrimPrefix(v, "v")
 }

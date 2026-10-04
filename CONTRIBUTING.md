@@ -102,7 +102,7 @@ make fmt     # gofmt
 │   │   ├── yaml.go         # YAML formatter
 │   │   └── errors.go       # Output error handling
 │   ├── build/              # Build version info (Version, Commit, Date)
-│   └── update/             # Self-update check logic
+│   └── update/             # Release check, update notice, and installer
 ├── Makefile
 ├── .goreleaser.yaml
 └── go.mod

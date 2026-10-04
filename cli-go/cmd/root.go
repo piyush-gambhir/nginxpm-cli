@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
+	"golang.org/x/term"
 
 	"github.com/piyush-gambhir/nginxpm-cli/cli-go/cmd/access"
 	"github.com/piyush-gambhir/nginxpm-cli/cli-go/cmd/audit"
@@ -44,6 +45,11 @@ var OutputFormat string
 
 // Execute is the main entry point for the CLI.
 func Execute() error {
+	if goos == "windows" {
+		if exe, err := executablePath(); err == nil {
+			update.RemoveLeftoverBinary(goos, exe)
+		}
+	}
 	return newRootCmd().Execute()
 }
 
@@ -115,7 +121,30 @@ func createClient(ctx context.Context, f *cmdutil.Factory, resolved *config.Reso
 	}
 }
 
-const updateRepo = "piyush-gambhir/nginxpm-cli"
+// Seams for tests: whether stderr is a terminal, and how long
+// PersistentPostRun waits for the background update check (0: only print a
+// result that is already available, never delay the command).
+var (
+	stderrIsTerminal = func() bool { return term.IsTerminal(int(os.Stderr.Fd())) }
+	updateNoticeWait time.Duration
+)
+
+// skipUpdateCheck reports whether the background release check must not run
+// for this invocation (no network, no notice).
+func skipUpdateCheck(cmd *cobra.Command) bool {
+	top := cmd
+	for top.HasParent() && top.Parent().HasParent() {
+		top = top.Parent()
+	}
+	switch name := top.Name(); {
+	case name == "update", name == "version", name == "completion", name == "help", strings.HasPrefix(name, "__complete"):
+		return true
+	}
+	if flagQuiet {
+		return true
+	}
+	return update.NotifierDisabled(build.Version, os.Getenv, stderrIsTerminal())
+}
 
 func newRootCmd() *cobra.Command {
 	f := &cmdutil.Factory{
@@ -149,14 +178,14 @@ Claude Code skill: https://github.com/piyush-gambhir/nginxpm-cli/blob/main/nginx
 			f.Quiet = flagQuiet
 			f.Verbose = flagVerbose
 
-			// Start background update check for most commands.
+			// Start the background update check; PersistentPostRun prints
+			// the notice only if the result is already in.
 			cmdName := cmd.Name()
-			skipUpdateCheck := cmdName == "update" || cmdName == "version" || cmdName == "completion" || cmdName == "help"
-			if !skipUpdateCheck && build.Version != "dev" && build.Version != "" {
-				updateResult = make(chan *update.UpdateInfo, 1)
+			if !skipUpdateCheck(cmd) {
+				result := make(chan *update.UpdateInfo, 1)
+				updateResult = result
 				go func() {
-					info, _ := update.CheckForUpdate(build.Version, updateRepo, config.ConfigDir())
-					updateResult <- info
+					result <- update.CheckForUpdate(build.Version, config.ConfigDir())
 				}()
 			}
 
@@ -199,13 +228,21 @@ Claude Code skill: https://github.com/piyush-gambhir/nginxpm-cli/blob/main/nginx
 			if updateResult == nil {
 				return
 			}
-			select {
-			case info := <-updateResult:
-				if info != nil && info.Available {
-					update.PrintUpdateNotice(os.Stderr, info)
+			var info *update.UpdateInfo
+			if updateNoticeWait > 0 {
+				select {
+				case info = <-updateResult:
+				case <-time.After(updateNoticeWait):
 				}
-			case <-time.After(2 * time.Second):
-				// Don't block command output waiting for update check.
+			} else {
+				select {
+				case info = <-updateResult:
+				default:
+				}
+			}
+			if info != nil && info.Available {
+				exe, err := executablePath()
+				update.Notify(cmd.ErrOrStderr(), info, config.ConfigDir(), err == nil && isGoInstall(exe))
 			}
 		},
 	}

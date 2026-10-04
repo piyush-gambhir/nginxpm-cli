@@ -51,7 +51,7 @@ git clone https://github.com/piyush-gambhir/nginxpm-cli.git
 cd nginxpm-cli/cli-go && make install
 ```
 
-Note: when installed via `go install`, the build version is the module pseudo-version. When built from source without ldflags it reports version `dev`, and the self-update path (`nginxpm update`) is disabled for `dev` builds.
+Note: `make install` stamps the version from the nearest `v*` git tag. A build without those ldflags (plain `go build` or `go install`) reports version `dev`, and `nginxpm update` and the update notice are disabled for `dev` builds.
 
 ### Self-update
 
@@ -63,7 +63,23 @@ nginxpm update --check
 nginxpm update
 ```
 
-`nginxpm update` downloads `nginxpm-cli_<os>_<arch>.tar.gz` from the matching GitHub release, verifies it against `checksums.txt`, then atomically replaces the current executable (may require `sudo` if the binary lives in a root-owned path). On Windows, `nginxpm update` does not install: it exits with an error pointing at the release page, where you download `nginxpm-cli_windows_<arch>.zip` and replace `nginxpm.exe` yourself (`nginxpm update --check` works on every OS). Non-`update`/`version`/`completion`/`help` commands also run a background update check and print a one-line notice on stderr when an upgrade is available.
+`nginxpm update` works on macOS, Linux, and Windows. It downloads `nginxpm-cli_<os>_<arch>.tar.gz` (`.zip` on Windows) from the latest GitHub release, verifies its SHA-256 against `checksums.txt` (a mismatch or missing entry aborts), extracts only the `nginxpm` binary, and replaces the running executable: on macOS and Linux by renaming a new file over it, on Windows by moving the running `nginxpm.exe` aside to `nginxpm.exe.old` (deleted on the next run). Any failure leaves the old binary working. If the executable's directory is not writable it stops and says to re-run with `sudo` or reinstall with the install script into a writable `INSTALL_DIR`. A source build in a Go bin directory (`$GOBIN`, `$GOPATH/bin`, `~/go/bin`) is not replaced; the command prints `git pull && make install` instead. Success prints `Updated nginxpm v<current> -> v<latest>` and the release notes URL.
+
+- `nginxpm update --check` always queries GitHub and prints the current and latest versions, whether an update is available, and the release URL. It exits 0 either way. With `-o json` it prints an object with `current_version`, `latest_version`, `update_available`, `release_url`, and `install_method` (`self`, or `go` for a source build in a Go bin directory).
+- Bare `nginxpm update` asks `Update now? [Y/n]` in a terminal. `--yes`/`-y` skips the prompt; under `--no-input`, or when stdin is not a terminal, it fails unless `--yes` is passed. `--read-only` (or `NGINXPM_READ_ONLY`) blocks installing but not `--check`.
+- `nginxpm version` adds `latest:` and `update_available:` lines when an earlier check is cached; it never contacts GitHub.
+
+### Update notice
+
+In an interactive terminal, other commands check GitHub for the latest release in the background (3-second timeout, result cached for 24 hours in `~/.config/nginxpm-cli/update-check.json`, failures cached too) and never delay the command. When a newer release exists, this prints on stderr after the command's output, once per release per 24 hours:
+
+```text
+A new version of nginxpm is available: v0.1.9 -> v0.1.10
+Update with: nginxpm update
+Release notes: https://github.com/piyush-gambhir/nginxpm-cli/releases/tag/v0.1.10
+```
+
+For a source build in a Go bin directory the second line is `Update with: git pull && make install (in your nginxpm-cli/cli-go clone)`. The check makes no network request and prints nothing when stderr is not a terminal, when `CI` is set to any value, when `NGINXPM_NO_UPDATE_NOTIFIER` or `NO_UPDATE_NOTIFIER` is set to any value, with `--quiet`/`NGINXPM_QUIET`, for development builds, and for `update`, `version`, `completion`, `help`, and shell-completion requests.
 
 ## Authentication
 
@@ -109,6 +125,7 @@ For each of URL / email / password / insecure, the first non-empty source wins:
 | `NGINXPM_NO_INPUT` | Disable all interactive prompts when set to `true` or `1` |
 | `NGINXPM_QUIET` | Suppress informational output when set to `true` or `1` |
 | `NGINXPM_VERBOSE` | Enable verbose HTTP logging to stderr when set to `true` or `1` |
+| `NGINXPM_NO_UPDATE_NOTIFIER` | Turn off the new-version notice when set to any value (`NO_UPDATE_NOTIFIER` and `CI` also turn it off) |
 
 The `status` command needs only a URL (no email/password); `login` and `status` perform their own auth handling.
 
@@ -139,7 +156,8 @@ Several resource commands share these helpers:
 |------|-------|---------|-------------|
 | `--file` | `-f` | all `create`/`update`, `setting update`, `user password`, `user permissions` | Path to a JSON or YAML file holding the request body. Use `-f -` to read from stdin. The format (JSON vs YAML) is auto-detected from content. **Required** for these commands. |
 | `--confirm` | | all `delete` | Skip the interactive confirmation prompt for destructive deletes. |
-| `--check` | | `update` | Only check for an available update; do not install. |
+| `--check` | | `update` | Only check for an available update (always queries GitHub); do not install. Supports `-o json`. |
+| `--yes` | `-y` | `update` | Install without the confirmation prompt (required under `--no-input` or without a terminal). |
 
 ## Commands
 
@@ -435,15 +453,15 @@ nginxpm status --url http://localhost:81 -o json
 nginxpm version
 ```
 
-Prints `nginxpm-cli version <v>`, the commit hash, and the build date.
+Prints `nginxpm-cli version <v>`, the commit hash, and the build date. When an earlier update check is cached it also prints `latest: <v>` and `update_available: true|false` (never contacts GitHub).
 
 ### update, self-update (no auth)
 
 ```text
-nginxpm update [--check]
+nginxpm update [--check] [--yes]
 ```
 
-See the [Self-update](#self-update) section above. `--check` only reports availability; bare `update` prompts before installing. Disabled for `dev` builds. Install is not supported on Windows (`--check` is).
+See the [Self-update](#self-update) section above. `--check` only reports availability (`-o json` supported); bare `update` prompts before installing unless `--yes`. Works on macOS, Linux, and Windows. Disabled for `dev` builds.
 
 ### completion, shell completions (no auth)
 

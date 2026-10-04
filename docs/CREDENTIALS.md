@@ -178,6 +178,7 @@ The file is created automatically by `nginxpm login`. Permissions are set to `06
 | `NGINXPM_NO_INPUT` | Disable interactive prompts |
 | `NGINXPM_QUIET` | Suppress informational output |
 | `NGINXPM_VERBOSE` | Enable verbose HTTP logging |
+| `NGINXPM_NO_UPDATE_NOTIFIER` | Turn off the new-version notice (any value) |
 
 ### CLI Flags
 
