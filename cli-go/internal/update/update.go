@@ -278,7 +278,10 @@ func fetchLatest(timeout time.Duration) (string, error) {
 		return "", err
 	}
 	resp.Body.Close()
-	if resp.StatusCode < 300 || resp.StatusCode > 399 {
+	switch resp.StatusCode {
+	case http.StatusMovedPermanently, http.StatusFound, http.StatusSeeOther,
+		http.StatusTemporaryRedirect, http.StatusPermanentRedirect:
+	default:
 		return "", fmt.Errorf("GET %s returned status %d, want a redirect to the latest release", latestURL, resp.StatusCode)
 	}
 	return tagFromLocation(resp.Header.Get("Location"))

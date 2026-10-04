@@ -2,6 +2,7 @@ package update
 
 import (
 	"bytes"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -90,9 +91,17 @@ func TestFetchLatestReadsTheRedirectWithoutFollowingIt(t *testing.T) {
 }
 
 func TestFetchLatestRejectsNonRedirect(t *testing.T) {
-	latestServer(t, "", http.StatusForbidden)
-	if _, err := fetchLatest(BackgroundTimeout); err == nil || !strings.Contains(err.Error(), "status 403") {
-		t.Fatalf("fetchLatest error = %v, want status 403", err)
+	for _, status := range []int{http.StatusOK, http.StatusNotModified, http.StatusForbidden} {
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Location", GitHubURL+"/"+Repo+"/releases/tag/v0.1.11")
+			w.WriteHeader(status)
+		}))
+		setGitHubURL(t, srv.URL)
+		_, err := fetchLatest(BackgroundTimeout)
+		srv.Close()
+		if err == nil || !strings.Contains(err.Error(), fmt.Sprintf("status %d", status)) {
+			t.Errorf("status %d: fetchLatest error = %v, want a failed check", status, err)
+		}
 	}
 }
 
