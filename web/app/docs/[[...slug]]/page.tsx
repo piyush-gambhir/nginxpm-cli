@@ -16,7 +16,7 @@ import {
   createDocsMetadataDescription,
   createPageMetadata,
 } from '@/lib/metadata';
-import { gitConfig, siteUrl } from '@/lib/shared';
+import { gitConfig, siteUrl, sourcePath } from '@/lib/shared';
 import {
   licenseUrl,
   projectDescription,
@@ -108,7 +108,7 @@ export default async function Page(props: PageProps<'/docs/[[...slug]]'>) {
           <MarkdownCopyButton markdownUrl={markdownUrl} />
           <ViewOptionsPopover
             markdownUrl={markdownUrl}
-            githubUrl={`https://github.com/${gitConfig.user}/${gitConfig.repo}/blob/${gitConfig.branch}/content/docs/${page.path}`}
+            githubUrl={`https://github.com/${gitConfig.user}/${gitConfig.repo}/blob/${gitConfig.branch}/${sourcePath(page.path)}`}
           />
         </div>
         <DocsBody className="docs-page__body">

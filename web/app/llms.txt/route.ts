@@ -1,12 +1,17 @@
 import { source } from '@/lib/source';
 import { llms } from 'fumadocs-core/source';
 import { site } from '@/lib/site';
+import { siteUrl } from '@/lib/shared';
 import { getOtherSuiteProjects } from '@/lib/suite';
 
 export const revalidate = false;
 
-export function GET() {
-  const [heading, ...sections] = llms(source).index().split('\n\n');
+export async function GET() {
+  // index() returns a Promise since fumadocs-core 16.15.17. Its links are
+  // root-relative (/docs/...), which miss the basePath, so make them absolute.
+  const [heading, ...sections] = (await llms(source).index())
+    .replace(/\]\((\/[^)]+)\)/g, (_match, path: string) => `](${siteUrl}${path})`)
+    .split('\n\n');
   const preamble =
     'nginxpm CLI is agent-ready and harness-agnostic: Claude Code, OpenAI Codex, Cursor, or any agent harness that can run shell commands can manage Nginx Proxy Manager hosts, streams, and certificates through structured JSON/YAML output, read-only mode, and no-input automation flags.';
   const index = [heading, preamble, ...sections].join('\n\n');
