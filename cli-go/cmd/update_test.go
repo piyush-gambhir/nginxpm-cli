@@ -27,7 +27,7 @@ const noticeHeadline = "A new version of nginxpm is available"
 // a fake GitHub serving latest (and, when archive is set, its download), a
 // temp config dir, and a stand-in executable.
 type updateEnv struct {
-	apiHits   atomic.Int32
+	checkHits atomic.Int32
 	configDir string
 	exe       string
 }
@@ -49,9 +49,10 @@ func newUpdateEnv(t *testing.T, latest string, archive []byte) *updateEnv {
 	download := fmt.Sprintf("/%s/releases/download/v%s/", update.Repo, latest)
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch {
-		case r.URL.Path == "/repos/"+update.Repo+"/releases/latest":
-			env.apiHits.Add(1)
-			fmt.Fprintf(w, `{"tag_name": "v%s"}`, latest)
+		case r.URL.Path == "/"+update.Repo+"/releases/latest":
+			env.checkHits.Add(1)
+			w.Header().Set("Location", fmt.Sprintf("%s/%s/releases/tag/v%s", update.GitHubURL, update.Repo, latest))
+			w.WriteHeader(http.StatusFound)
 		case archive != nil && r.URL.Path == download+archiveName:
 			_, _ = w.Write(archive)
 		case archive != nil && r.URL.Path == download+"checksums.txt":
@@ -68,15 +69,15 @@ func newUpdateEnv(t *testing.T, latest string, archive []byte) *updateEnv {
 		t.Fatal(err)
 	}
 
-	origAPI, origDL, origVersion := update.APIBaseURL, update.DownloadBaseURL, build.Version
+	origURL, origVersion := update.GitHubURL, build.Version
 	origTTY, origStdin, origWait, origExe := stderrIsTerminal, stdinIsTerminal, updateNoticeWait, executablePath
 	origGOOS, origGOARCH := goos, goarch
 	t.Cleanup(func() {
-		update.APIBaseURL, update.DownloadBaseURL, build.Version = origAPI, origDL, origVersion
+		update.GitHubURL, build.Version = origURL, origVersion
 		stderrIsTerminal, stdinIsTerminal, updateNoticeWait, executablePath = origTTY, origStdin, origWait, origExe
 		goos, goarch = origGOOS, origGOARCH
 	})
-	update.APIBaseURL, update.DownloadBaseURL, build.Version = srv.URL, srv.URL, "0.1.9"
+	update.GitHubURL, build.Version = srv.URL, "0.1.9"
 	stderrIsTerminal = func() bool { return true }
 	stdinIsTerminal = func() bool { return false }
 	updateNoticeWait = 5 * time.Second
@@ -147,7 +148,7 @@ func TestUpdateNoticeShownOncePerVersion(t *testing.T) {
 	if stderr != "" {
 		t.Fatalf("notice repeated on the next run: %q", stderr)
 	}
-	if got := env.apiHits.Load(); got != 1 {
+	if got := env.checkHits.Load(); got != 1 {
 		t.Fatalf("GitHub requests = %d, want 1 (second run uses the cache)", got)
 	}
 }
@@ -165,7 +166,7 @@ func TestUpdateNoticeFromFreshCacheNeedsNoWait(t *testing.T) {
 	if !strings.Contains(stderr, noticeHeadline+": v0.1.9 -> v0.1.10") {
 		t.Fatalf("cached notice missing on a fast command: %q", stderr)
 	}
-	if got := env.apiHits.Load(); got != 1 {
+	if got := env.checkHits.Load(); got != 1 {
 		t.Fatalf("GitHub requests = %d, want 1 (only the seeding --check)", got)
 	}
 }
@@ -218,7 +219,7 @@ func TestUpdateNoticeSuppressed(t *testing.T) {
 			if strings.Contains(stderr, noticeHeadline) {
 				t.Errorf("notice printed: %q", stderr)
 			}
-			if got := env.apiHits.Load(); got != 0 {
+			if got := env.checkHits.Load(); got != 0 {
 				t.Errorf("GitHub requests = %d, want 0", got)
 			}
 		})
@@ -271,7 +272,7 @@ func TestUpdateCheckJSON(t *testing.T) {
 			t.Fatalf("update --check -o json = %v, want %v", got, want)
 		}
 	}
-	if got := env.apiHits.Load(); got != 2 {
+	if got := env.checkHits.Load(); got != 2 {
 		t.Fatalf("GitHub requests = %d, want 2 (--check bypasses the cache)", got)
 	}
 
@@ -428,7 +429,7 @@ func TestVersionShowsCachedLatest(t *testing.T) {
 	if _, _, err := runRoot(t, "", "update", "--check"); err != nil {
 		t.Fatal(err)
 	}
-	hits := env.apiHits.Load()
+	hits := env.checkHits.Load()
 	stdout, _, err = runRoot(t, "", "version")
 	if err != nil {
 		t.Fatal(err)
@@ -436,7 +437,7 @@ func TestVersionShowsCachedLatest(t *testing.T) {
 	if !strings.HasPrefix(stdout, "nginxpm-cli version 0.1.9\n") || !strings.Contains(stdout, "  latest: 0.1.10\n  update_available: true\n") {
 		t.Fatalf("version output = %q", stdout)
 	}
-	if env.apiHits.Load() != hits {
+	if env.checkHits.Load() != hits {
 		t.Fatal("version contacted GitHub")
 	}
 }
