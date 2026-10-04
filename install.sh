@@ -1,6 +1,6 @@
 #!/bin/sh
 # Install latest:   curl -sSfL https://raw.githubusercontent.com/piyush-gambhir/nginxpm-cli/main/install.sh | sh
-# Specific version: curl -sSfL .../install.sh | VERSION=0.1.0 sh
+# Specific version: curl -sSfL .../install.sh | VERSION=0.1.7 sh
 set -e
 REPO="piyush-gambhir/nginxpm-cli"
 BINARY="nginxpm"
