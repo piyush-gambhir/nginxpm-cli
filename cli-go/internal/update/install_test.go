@@ -200,12 +200,29 @@ func TestInstallWindowsMovesRunningExeAside(t *testing.T) {
 
 func TestReplaceWindowsRestoresOldExeOnFailure(t *testing.T) {
 	exe := installedExe(t, "nginxpm.exe")
-	err := replaceWindows(filepath.Join(t.TempDir(), "missing.exe"), exe)
-	if err == nil {
-		t.Fatal("expected an error for a missing source")
+	src := filepath.Join(t.TempDir(), "nginxpm.exe")
+	if err := os.WriteFile(src, []byte("new exe"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	// Fail the step that moves the staged exe into place, after the running
+	// exe has already been moved aside.
+	orig := rename
+	t.Cleanup(func() { rename = orig })
+	rename = func(from, to string) error {
+		if to == exe && from != exe+".old" {
+			return fmt.Errorf("injected failure")
+		}
+		return orig(from, to)
+	}
+
+	if err := replaceWindows(src, exe); err == nil || !strings.Contains(err.Error(), "injected failure") {
+		t.Fatalf("replaceWindows error = %v, want the injected failure", err)
 	}
 	if got := readFile(t, exe); got != "old binary" {
-		t.Fatalf("nginxpm.exe = %q, want the old binary untouched", got)
+		t.Fatalf("nginxpm.exe = %q, want the old binary restored", got)
+	}
+	if entries, _ := os.ReadDir(filepath.Dir(exe)); len(entries) != 1 {
+		t.Errorf("rollback left files behind: %v", entries)
 	}
 }
 

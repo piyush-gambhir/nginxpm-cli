@@ -32,6 +32,9 @@ const (
 // httptest server.
 var DownloadBaseURL = "https://github.com"
 
+// rename is os.Rename; tests override it to fail a specific step.
+var rename = os.Rename
+
 // Installer downloads a release archive, verifies it against checksums.txt,
 // and replaces ExecPath with the binary inside. GOOS and GOARCH pick the
 // archive and the replacement strategy, so tests can run every platform's
@@ -247,7 +250,8 @@ func extractFromTarGz(archivePath, want, outPath string) error {
 	}
 	defer gz.Close()
 
-	tr := tar.NewReader(gz)
+	// Bound the decompressed stream too, including entries that are skipped.
+	tr := tar.NewReader(io.LimitReader(gz, 2*maxReleaseArtifactBytes))
 	for {
 		hdr, err := tr.Next()
 		if errors.Is(err, io.EOF) {
@@ -354,7 +358,7 @@ func replaceUnix(src, execPath string) error {
 	if err != nil {
 		return err
 	}
-	if err := os.Rename(staged, execPath); err != nil {
+	if err := rename(staged, execPath); err != nil {
 		os.Remove(staged)
 		return err
 	}
@@ -371,13 +375,13 @@ func replaceWindows(src, execPath string) error {
 	}
 	old := execPath + ".old"
 	_ = os.Remove(old)
-	if err := os.Rename(execPath, old); err != nil {
+	if err := rename(execPath, old); err != nil {
 		os.Remove(staged)
 		return fmt.Errorf("moving the running executable aside: %w", err)
 	}
-	if err := os.Rename(staged, execPath); err != nil {
+	if err := rename(staged, execPath); err != nil {
 		os.Remove(staged)
-		if restoreErr := os.Rename(old, execPath); restoreErr != nil {
+		if restoreErr := rename(old, execPath); restoreErr != nil {
 			return fmt.Errorf("installing new executable: %w (restoring %s also failed: %v)", err, old, restoreErr)
 		}
 		return fmt.Errorf("installing new executable: %w", err)

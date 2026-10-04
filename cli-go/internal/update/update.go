@@ -13,6 +13,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/gofrs/flock"
 )
 
 const (
@@ -99,28 +101,31 @@ func ReleaseURL(version string) string {
 	return fmt.Sprintf("https://github.com/%s/releases/tag/v%s", Repo, trimV(version))
 }
 
+// CachedResult reads the cache without touching the network. fresh is true
+// when the last check (successful or not) is less than 24 hours old; info is
+// nil when that check failed or nothing is cached.
+func CachedResult(currentVersion, configDir string) (info *UpdateInfo, fresh bool) {
+	entry, err := readCache(filepath.Join(configDir, cacheFileName))
+	if err != nil {
+		return nil, false
+	}
+	checked, err := time.Parse(time.RFC3339, entry.LastChecked)
+	if err != nil || now().Sub(checked) >= cacheDuration {
+		return nil, false
+	}
+	return newInfo(currentVersion, entry.LatestVersion), true
+}
+
 // CheckForUpdate returns the cached result when it is less than 24 hours old,
 // and otherwise asks GitHub (3-second timeout) and caches the answer. Failed
 // checks are cached too, so an offline machine does not retry on every run.
 // It returns nil when the latest version is unknown.
 func CheckForUpdate(currentVersion, configDir string) *UpdateInfo {
-	path := filepath.Join(configDir, cacheFileName)
-	entry, _ := readCache(path)
-	if entry != nil {
-		if checked, err := time.Parse(time.RFC3339, entry.LastChecked); err == nil && now().Sub(checked) < cacheDuration {
-			return newInfo(currentVersion, entry.LatestVersion)
-		}
-	}
-	if entry == nil {
-		entry = &cacheEntry{}
+	if info, fresh := CachedResult(currentVersion, configDir); fresh {
+		return info
 	}
 	latest, err := fetchLatest(BackgroundTimeout)
-	entry.LastChecked = now().UTC().Format(time.RFC3339)
-	entry.LatestVersion, entry.Error = latest, ""
-	if err != nil {
-		entry.Error = err.Error()
-	}
-	writeCache(path, entry)
+	recordCheck(configDir, latest, err)
 	return newInfo(currentVersion, latest)
 }
 
@@ -131,15 +136,21 @@ func CheckForUpdateFresh(currentVersion, configDir string) (*UpdateInfo, error) 
 	if err != nil {
 		return nil, err
 	}
-	path := filepath.Join(configDir, cacheFileName)
-	entry, _ := readCache(path)
-	if entry == nil {
-		entry = &cacheEntry{}
-	}
-	entry.LastChecked = now().UTC().Format(time.RFC3339)
-	entry.LatestVersion, entry.Error = latest, ""
-	writeCache(path, entry)
+	recordCheck(configDir, latest, nil)
 	return newInfo(currentVersion, latest), nil
+}
+
+// recordCheck stores a check result, keeping the notice fields that another
+// process may have written while the request was in flight.
+func recordCheck(configDir, latest string, checkErr error) {
+	modifyCache(configDir, true, func(entry *cacheEntry) bool {
+		entry.LastChecked = now().UTC().Format(time.RFC3339)
+		entry.LatestVersion, entry.Error = latest, ""
+		if checkErr != nil {
+			entry.Error = checkErr.Error()
+		}
+		return true
+	})
 }
 
 // CachedInfo returns what the cache knows about the latest release without
@@ -159,25 +170,27 @@ func ClearCache(configDir string) {
 
 // Notify prints the new-version notice to w when info reports an update that
 // was not already announced in the last 24 hours, and records the
-// announcement in the cache so a burst of commands shows it once.
+// announcement in the cache so a burst of commands shows it once. The claim
+// is made under the cache lock; if another process holds it, this run skips
+// the notice rather than wait.
 func Notify(w io.Writer, info *UpdateInfo, configDir string, goInstall bool) {
 	if info == nil || !info.Available {
 		return
 	}
-	path := filepath.Join(configDir, cacheFileName)
-	entry, _ := readCache(path)
-	if entry == nil {
-		entry = &cacheEntry{LastChecked: now().UTC().Format(time.RFC3339), LatestVersion: info.LatestVersion}
-	}
-	if entry.NotifiedVersion == info.LatestVersion {
-		if at, err := time.Parse(time.RFC3339, entry.NotifiedAt); err == nil && now().Sub(at) < noticeInterval {
-			return
+	modifyCache(configDir, false, func(entry *cacheEntry) bool {
+		if entry.NotifiedVersion == info.LatestVersion {
+			if at, err := time.Parse(time.RFC3339, entry.NotifiedAt); err == nil && now().Sub(at) < noticeInterval {
+				return false
+			}
 		}
-	}
-	PrintNotice(w, info, goInstall)
-	entry.NotifiedVersion = info.LatestVersion
-	entry.NotifiedAt = now().UTC().Format(time.RFC3339)
-	writeCache(path, entry)
+		if entry.LastChecked == "" {
+			entry.LastChecked, entry.LatestVersion = now().UTC().Format(time.RFC3339), info.LatestVersion
+		}
+		PrintNotice(w, info, goInstall)
+		entry.NotifiedVersion = info.LatestVersion
+		entry.NotifiedAt = now().UTC().Format(time.RFC3339)
+		return true
+	})
 }
 
 // PrintNotice writes the new-version notice, preceded by a blank line.
@@ -271,6 +284,32 @@ func fetchLatest(timeout time.Duration) (string, error) {
 		return "", fmt.Errorf("unexpected release tag %q", release.TagName)
 	}
 	return trimV(release.TagName), nil
+}
+
+// modifyCache runs a read-modify-write of the cache under a cross-process
+// lock; fn returns whether to write. With wait=false it gives up when another
+// process holds the lock. Errors are ignored: the cache is an optimization.
+func modifyCache(configDir string, wait bool, fn func(*cacheEntry) bool) {
+	if err := os.MkdirAll(configDir, 0o700); err != nil {
+		return
+	}
+	path := filepath.Join(configDir, cacheFileName)
+	lock := flock.New(path + ".lock")
+	if wait {
+		if err := lock.Lock(); err != nil {
+			return
+		}
+	} else if ok, err := lock.TryLock(); err != nil || !ok {
+		return
+	}
+	defer lock.Unlock()
+	entry, err := readCache(path)
+	if err != nil {
+		entry = &cacheEntry{}
+	}
+	if fn(entry) {
+		writeCache(path, entry)
+	}
 }
 
 func readCache(path string) (*cacheEntry, error) {

@@ -184,9 +184,16 @@ Claude Code skill: https://github.com/piyush-gambhir/nginxpm-cli/blob/main/nginx
 			if !skipUpdateCheck(cmd) {
 				result := make(chan *update.UpdateInfo, 1)
 				updateResult = result
-				go func() {
-					result <- update.CheckForUpdate(build.Version, config.ConfigDir())
-				}()
+				// A fresh cache is read here (a small local file), so even a
+				// fast command can show a cached notice; only a stale cache
+				// waits on the network in the background.
+				if info, fresh := update.CachedResult(build.Version, config.ConfigDir()); fresh {
+					result <- info
+				} else {
+					go func() {
+						result <- update.CheckForUpdate(build.Version, config.ConfigDir())
+					}()
+				}
 			}
 
 			// Skip auth setup for commands that don't need it.

@@ -152,6 +152,24 @@ func TestUpdateNoticeShownOncePerVersion(t *testing.T) {
 	}
 }
 
+func TestUpdateNoticeFromFreshCacheNeedsNoWait(t *testing.T) {
+	env := newUpdateEnv(t, "0.1.10", nil)
+	if _, _, err := runRoot(t, "", "update", "--check"); err != nil { // seeds the cache
+		t.Fatal(err)
+	}
+	updateNoticeWait = 0 // production: never wait for the background check
+	_, stderr, err := runRoot(t, "", "config", "list-profiles")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(stderr, noticeHeadline+": v0.1.9 -> v0.1.10") {
+		t.Fatalf("cached notice missing on a fast command: %q", stderr)
+	}
+	if got := env.apiHits.Load(); got != 1 {
+		t.Fatalf("GitHub requests = %d, want 1 (only the seeding --check)", got)
+	}
+}
+
 func TestUpdateNoticeGoInstallLine(t *testing.T) {
 	env := newUpdateEnv(t, "0.1.10", nil)
 	gobin := filepath.Dir(env.exe)

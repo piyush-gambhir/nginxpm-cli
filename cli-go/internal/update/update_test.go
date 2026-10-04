@@ -11,6 +11,8 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"github.com/gofrs/flock"
 )
 
 // latestServer answers GitHub's releases/latest with tag (or status when
@@ -147,6 +149,50 @@ func TestCheckForUpdateCachesForADay(t *testing.T) {
 	CheckForUpdate("0.1.9", dir)
 	if got := hits.Load(); got != 2 {
 		t.Fatalf("GitHub requests after 24h = %d, want 2", got)
+	}
+}
+
+func TestNotifySkipsWhileAnotherProcessHoldsTheCache(t *testing.T) {
+	dir := t.TempDir()
+	lock := flock.New(filepath.Join(dir, cacheFileName) + ".lock")
+	if err := lock.Lock(); err != nil {
+		t.Fatal(err)
+	}
+	var buf bytes.Buffer
+	Notify(&buf, newInfo("0.1.9", "0.1.10"), dir, false)
+	if buf.Len() != 0 {
+		t.Fatalf("notice printed while another process held the cache lock: %q", buf.String())
+	}
+	if err := lock.Unlock(); err != nil {
+		t.Fatal(err)
+	}
+	Notify(&buf, newInfo("0.1.9", "0.1.10"), dir, false)
+	if !strings.Contains(buf.String(), "v0.1.10") {
+		t.Fatalf("notice not printed once the lock was free: %q", buf.String())
+	}
+}
+
+func TestRefreshKeepsNoticeWrittenDuringRequest(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, cacheFileName)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Another process announces 0.1.10 while this request is in flight.
+		writeCache(path, &cacheEntry{LastChecked: "2026-10-05T08:00:00Z", LatestVersion: "0.1.10", NotifiedVersion: "0.1.10", NotifiedAt: "2026-10-05T08:00:00Z"})
+		fmt.Fprint(w, `{"tag_name": "v0.1.10"}`)
+	}))
+	t.Cleanup(srv.Close)
+	orig := APIBaseURL
+	APIBaseURL = srv.URL
+	t.Cleanup(func() { APIBaseURL = orig })
+	setNow(t, time.Date(2026, 10, 5, 9, 0, 0, 0, time.UTC))
+
+	CheckForUpdate("0.1.9", dir)
+	entry, err := readCache(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if entry.NotifiedVersion != "0.1.10" || entry.LastChecked != "2026-10-05T09:00:00Z" {
+		t.Fatalf("cache after refresh = %+v, want the concurrent notice kept and the new check time", entry)
 	}
 }
 
