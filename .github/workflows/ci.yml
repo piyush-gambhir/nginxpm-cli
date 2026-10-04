@@ -66,3 +66,4 @@ jobs:
       - run: pnpm types:check
       - run: pnpm build:cloudflare
       - run: pnpm test:search
+      - run: pnpm test:llms
