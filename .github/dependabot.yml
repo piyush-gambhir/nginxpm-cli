@@ -1,7 +1,8 @@
 version: 2
 updates:
+  # The Go module lives in cli-go/, not the repository root.
   - package-ecosystem: gomod
-    directory: /
+    directory: /cli-go
     schedule:
       interval: weekly
     groups:
@@ -11,3 +12,18 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    groups:
+      github-actions:
+        patterns: ["*"]
+  - package-ecosystem: npm
+    directory: /web
+    schedule:
+      interval: weekly
+    groups:
+      web-dependencies:
+        patterns: ["*"]
+        update-types: [minor, patch]
+    ignore:
+      # fumadocs-core must match the fumadocs-ui alias (npm:@fumadocs/base-ui@x)
+      # exactly, and Dependabot cannot update alias specs: bump both by hand.
+      - dependency-name: fumadocs-core

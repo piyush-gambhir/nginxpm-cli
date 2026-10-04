@@ -130,7 +130,7 @@ func newRootCmd() *cobra.Command {
 		Short: "Nginx Proxy Manager CLI - manage Nginx Proxy Manager from the command line",
 		Long: `A command-line interface for managing Nginx Proxy Manager proxy hosts, redirections, streams, certificates, and more.
 
-Full command reference (for agents/LLMs): https://nginxpm-cli.pages.dev/llms.txt
+Full command reference (for agents/LLMs): https://projects.piyushgambhir.com/nginxpm-cli/llms.txt
 Claude Code skill: https://github.com/piyush-gambhir/nginxpm-cli/blob/main/nginxpm/SKILL.md`,
 		SilenceUsage:  true,
 		SilenceErrors: true,

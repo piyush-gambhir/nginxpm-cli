@@ -16,12 +16,12 @@ This document is the complete reference. An LLM or agent should be able to drive
 
 ## Links
 
-- Home: https://nginxpm-cli.pages.dev/
+- Home: https://projects.piyushgambhir.com/nginxpm-cli/
 - Source: https://github.com/piyush-gambhir/nginxpm-cli
 - Issues: https://github.com/piyush-gambhir/nginxpm-cli/issues
-- Privacy: https://nginxpm-cli.pages.dev/privacy-policy
-- Terms: https://nginxpm-cli.pages.dev/terms-of-service
-- Contact: https://nginxpm-cli.pages.dev/contact
+- Privacy: https://projects.piyushgambhir.com/nginxpm-cli/privacy
+- Terms: https://projects.piyushgambhir.com/nginxpm-cli/terms
+- Contact: https://projects.piyushgambhir.com/nginxpm-cli/contact
 - Skill (Claude Code agent skill): https://github.com/piyush-gambhir/nginxpm-cli/blob/main/nginxpm/SKILL.md
 
 ## Skill (Claude Code / agents)
@@ -30,13 +30,12 @@ A ready-made Claude Code skill ships in the repo: https://github.com/piyush-gamb
 
 ## Install
 
-There is no Homebrew, apt, Docker, or install-script distribution. Use one of:
+There is no Homebrew, apt, or Docker distribution. Use one of:
 
 ```bash
-# 1. Go toolchain (installs the latest tagged release into $GOBIN / $GOPATH/bin)
-git clone https://github.com/piyush-gambhir/nginxpm-cli.git
-cd nginxpm-cli/cli-go
-make install
+# 1. Install script (macOS and Linux, amd64 and arm64; installs to /usr/local/bin,
+#    override with INSTALL_DIR, pin a release with VERSION=x.y.z)
+curl -sSfL https://raw.githubusercontent.com/piyush-gambhir/nginxpm-cli/main/install.sh | sh
 
 # 2. Prebuilt release binary
 #    Download the archive for your OS/arch from:
@@ -47,9 +46,9 @@ make install
 #    Each release also ships checksums.txt for SHA256 verification.
 #    Extract and place the `nginxpm` binary on your PATH.
 
-# 3. From source
+# 3. From source (requires Go; installs into $GOBIN or $GOPATH/bin)
 git clone https://github.com/piyush-gambhir/nginxpm-cli.git
-cd nginxpm-cli && make install
+cd nginxpm-cli/cli-go && make install
 ```
 
 Note: when installed via `go install`, the build version is the module pseudo-version. When built from source without ldflags it reports version `dev`, and the self-update path (`nginxpm update`) is disabled for `dev` builds.
