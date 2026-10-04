@@ -124,6 +124,13 @@ func CheckForUpdate(currentVersion, configDir string) *UpdateInfo {
 	if info, fresh := CachedResult(currentVersion, configDir); fresh {
 		return info
 	}
+	// Record the attempt before asking, so GitHub is asked at most once a
+	// day even when the command exits before the answer arrives; the last
+	// known version stays cached until then.
+	modifyCache(configDir, true, func(entry *cacheEntry) bool {
+		entry.LastChecked = now().UTC().Format(time.RFC3339)
+		return true
+	})
 	latest, err := fetchLatest(BackgroundTimeout)
 	recordCheck(configDir, latest, err)
 	return newInfo(currentVersion, latest)
@@ -161,11 +168,6 @@ func CachedInfo(currentVersion, configDir string) *UpdateInfo {
 		return nil
 	}
 	return newInfo(currentVersion, entry.LatestVersion)
-}
-
-// ClearCache removes the cached check, for example after a successful update.
-func ClearCache(configDir string) {
-	_ = os.Remove(filepath.Join(configDir, cacheFileName))
 }
 
 // Notify prints the new-version notice to w when info reports an update that

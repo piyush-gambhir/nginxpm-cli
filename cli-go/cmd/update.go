@@ -144,7 +144,8 @@ func runUpdate(cmd *cobra.Command, checkOnly, yes bool) error {
 	if err := installer.Install(cmd.Context(), info.LatestVersion); err != nil {
 		return err
 	}
-	update.ClearCache(configDir)
+	// The cache already holds this release (CheckForUpdateFresh stored it),
+	// so the notifier agrees that nothing newer is out.
 	fmt.Fprintf(out, "Updated nginxpm v%s -> v%s\n", trimV(current), info.LatestVersion)
 	fmt.Fprintf(out, "Release notes: %s\n", info.ReleaseURL)
 	return nil

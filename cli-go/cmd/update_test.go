@@ -28,8 +28,10 @@ const noticeHeadline = "A new version of nginxpm is available"
 // temp config dir, and a stand-in executable.
 type updateEnv struct {
 	checkHits atomic.Int32
-	configDir string
-	exe       string
+	// checkDelay (nanoseconds) holds back the answer to the release check.
+	checkDelay atomic.Int64
+	configDir  string
+	exe        string
 }
 
 func newUpdateEnv(t *testing.T, latest string, archive []byte) *updateEnv {
@@ -51,6 +53,10 @@ func newUpdateEnv(t *testing.T, latest string, archive []byte) *updateEnv {
 		switch {
 		case r.URL.Path == "/"+update.Repo+"/releases/latest":
 			env.checkHits.Add(1)
+			select {
+			case <-time.After(time.Duration(env.checkDelay.Load())):
+			case <-r.Context().Done():
+			}
 			w.Header().Set("Location", fmt.Sprintf("%s/%s/releases/tag/v%s", update.GitHubURL, update.Repo, latest))
 			w.WriteHeader(http.StatusFound)
 		case archive != nil && r.URL.Path == download+archiveName:
@@ -80,7 +86,6 @@ func newUpdateEnv(t *testing.T, latest string, archive []byte) *updateEnv {
 	update.GitHubURL, build.Version = srv.URL, "0.1.9"
 	stderrIsTerminal = func() bool { return true }
 	stdinIsTerminal = func() bool { return false }
-	updateNoticeWait = 5 * time.Second
 	executablePath = func() (string, error) { return env.exe, nil }
 	goos, goarch = "linux", "amd64"
 	return env
@@ -158,7 +163,7 @@ func TestUpdateNoticeFromFreshCacheNeedsNoWait(t *testing.T) {
 	if _, _, err := runRoot(t, "", "update", "--check"); err != nil { // seeds the cache
 		t.Fatal(err)
 	}
-	updateNoticeWait = 0 // production: never wait for the background check
+	updateNoticeWait = 0 // a cached result must not depend on the wait
 	_, stderr, err := runRoot(t, "", "config", "list-profiles")
 	if err != nil {
 		t.Fatal(err)
@@ -169,6 +174,48 @@ func TestUpdateNoticeFromFreshCacheNeedsNoWait(t *testing.T) {
 	if got := env.checkHits.Load(); got != 1 {
 		t.Fatalf("GitHub requests = %d, want 1 (only the seeding --check)", got)
 	}
+}
+
+func TestUpdateNoticeWaitsForThisRunsCheck(t *testing.T) {
+	env := newUpdateEnv(t, "0.1.10", nil)
+	env.checkDelay.Store(int64(200 * time.Millisecond))
+	_, stderr, err := runRoot(t, "", "config", "list-profiles")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(stderr, noticeHeadline+": v0.1.9 -> v0.1.10") {
+		t.Fatalf("a fast command lost the day's check: stderr = %q", stderr)
+	}
+}
+
+func TestUpdateNoticeWaitIsBounded(t *testing.T) {
+	env := newUpdateEnv(t, "0.1.10", nil)
+	env.checkDelay.Store(int64(2 * time.Second)) // slower than the wait, within the 3s timeout
+	start := time.Now()
+	_, stderr, err := runRoot(t, "", "config", "list-profiles")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if elapsed := time.Since(start); elapsed > 1500*time.Millisecond {
+		t.Fatalf("command took %v, want at most about 1s", elapsed)
+	}
+	if stderr != "" {
+		t.Fatalf("stderr = %q, want nothing before the answer arrives", stderr)
+	}
+
+	// The attempt is recorded before the request, so the next run neither
+	// asks GitHub again nor waits.
+	start = time.Now()
+	if _, _, err := runRoot(t, "", "config", "list-profiles"); err != nil {
+		t.Fatal(err)
+	}
+	if elapsed := time.Since(start); elapsed > 500*time.Millisecond {
+		t.Fatalf("second run took %v, want no wait", elapsed)
+	}
+	if got := env.checkHits.Load(); got != 1 {
+		t.Fatalf("GitHub requests = %d, want 1", got)
+	}
+	backgroundChecks.Wait()
 }
 
 func TestUpdateNoticeGoInstallLine(t *testing.T) {
@@ -302,10 +349,6 @@ func TestUpdateAlreadyLatest(t *testing.T) {
 
 func TestUpdateInstalls(t *testing.T) {
 	env := newUpdateEnv(t, "0.1.10", releaseTarGz(t, "new binary"))
-	// Seed the cache so the test can check that a successful update clears it.
-	if _, _, err := runRoot(t, "", "update", "--check"); err != nil {
-		t.Fatal(err)
-	}
 	stdout, _, err := runRoot(t, "", "update", "--yes")
 	if err != nil {
 		t.Fatal(err)
@@ -316,8 +359,9 @@ func TestUpdateInstalls(t *testing.T) {
 	if exeContents(t, env) != "new binary" {
 		t.Fatal("executable not replaced")
 	}
-	if _, err := os.Stat(filepath.Join(env.configDir, "update-check.json")); !os.IsNotExist(err) {
-		t.Fatalf("update cache not cleared: %v", err)
+	cache, err := os.ReadFile(filepath.Join(env.configDir, "update-check.json"))
+	if err != nil || !strings.Contains(string(cache), `"latest_version": "0.1.10"`) {
+		t.Fatalf("update did not store the latest release in the cache: %v\n%s", err, cache)
 	}
 }
 
