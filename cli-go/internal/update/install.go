@@ -28,10 +28,6 @@ const (
 	binaryName                    = "nginxpm"
 )
 
-// DownloadBaseURL is the root of release downloads; tests point it at an
-// httptest server.
-var DownloadBaseURL = "https://github.com"
-
 // rename is os.Rename; tests override it to fail a specific step.
 var rename = os.Rename
 
@@ -74,7 +70,7 @@ func (in *Installer) Install(ctx context.Context, version string) error {
 	defer os.RemoveAll(tmpDir)
 
 	archive := ArchiveName(in.GOOS, in.GOARCH)
-	base := fmt.Sprintf("%s/%s/releases/download/v%s/", DownloadBaseURL, Repo, version)
+	base := fmt.Sprintf("%s/%s/releases/download/v%s/", GitHubURL, Repo, version)
 	archivePath := filepath.Join(tmpDir, "release-archive")
 	fmt.Fprintf(in.Out, "Downloading %s...\n", base+archive)
 	if err := download(ctx, archivePath, base+archive, maxReleaseArtifactBytes); err != nil {

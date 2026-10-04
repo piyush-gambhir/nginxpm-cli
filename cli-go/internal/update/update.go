@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -38,8 +39,11 @@ const (
 	SourceUpdateCommand = "git pull && make install (in your nginxpm-cli/cli-go clone)"
 )
 
-// APIBaseURL is the GitHub API root; tests point it at an httptest server.
-var APIBaseURL = "https://api.github.com"
+// GitHubURL is where releases are looked up and downloaded; tests point it
+// at an httptest server. Only github.com pages are used, never
+// api.github.com, whose unauthenticated limit of 60 requests an hour per IP
+// fails behind shared NAT (offices, CI runners, VPNs).
+var GitHubURL = "https://github.com"
 
 // now is the clock; tests override it.
 var now = time.Now
@@ -68,10 +72,6 @@ type cacheEntry struct {
 	Error           string `json:"error,omitempty"`
 	NotifiedVersion string `json:"notified_version,omitempty"`
 	NotifiedAt      string `json:"notified_at,omitempty"`
-}
-
-type githubRelease struct {
-	TagName string `json:"tag_name"`
 }
 
 // IsReleaseVersion reports whether v is a semver release build rather than a
@@ -256,34 +256,53 @@ func newInfo(currentVersion, latest string) *UpdateInfo {
 	}
 }
 
-// fetchLatest asks GitHub for the latest release and returns its version
-// without the "v" prefix.
+// fetchLatest reads the latest release from the redirect that
+// github.com/<repo>/releases/latest answers with (to .../releases/tag/<tag>),
+// without following it, and returns the version without the "v" prefix.
 func fetchLatest(timeout time.Duration) (string, error) {
-	client := &http.Client{Timeout: timeout}
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/repos/%s/releases/latest", APIBaseURL, Repo), nil)
+	latestURL := fmt.Sprintf("%s/%s/releases/latest", GitHubURL, Repo)
+	client := &http.Client{
+		Timeout: timeout,
+		CheckRedirect: func(*http.Request, []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+	req, err := http.NewRequest(http.MethodGet, latestURL, nil)
 	if err != nil {
 		return "", fmt.Errorf("creating request: %w", err)
 	}
-	req.Header.Set("Accept", "application/vnd.github+json")
 	req.Header.Set("User-Agent", "nginxpm-cli")
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("checking for updates: %w", err)
+		return "", err
 	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("GitHub API returned status %d", resp.StatusCode)
+	resp.Body.Close()
+	if resp.StatusCode < 300 || resp.StatusCode > 399 {
+		return "", fmt.Errorf("GET %s returned status %d, want a redirect to the latest release", latestURL, resp.StatusCode)
 	}
+	return tagFromLocation(resp.Header.Get("Location"))
+}
 
-	var release githubRelease
-	if err := json.NewDecoder(io.LimitReader(resp.Body, 1<<20)).Decode(&release); err != nil {
-		return "", fmt.Errorf("decoding release: %w", err)
+// tagFromLocation takes the release version from a latest-release redirect,
+// which must point at GitHubURL/<Repo>/releases/tag/v<X.Y.Z>.
+func tagFromLocation(location string) (string, error) {
+	if location == "" {
+		return "", fmt.Errorf("the latest release redirect has no Location header")
 	}
-	if !releaseTagPattern.MatchString(release.TagName) {
-		return "", fmt.Errorf("unexpected release tag %q", release.TagName)
+	base, err := url.Parse(GitHubURL)
+	if err != nil {
+		return "", err
 	}
-	return trimV(release.TagName), nil
+	loc, err := url.Parse(location)
+	if err != nil || !strings.EqualFold(loc.Scheme, base.Scheme) || !strings.EqualFold(loc.Host, base.Host) || loc.User != nil {
+		return "", fmt.Errorf("unexpected latest release location %q", location)
+	}
+	tag, ok := strings.CutPrefix(loc.Path, "/"+Repo+"/releases/tag/")
+	if !ok || !strings.HasPrefix(tag, "v") || !releaseTagPattern.MatchString(tag) {
+		return "", fmt.Errorf("latest release location %q does not name a vX.Y.Z release tag", location)
+	}
+	return trimV(tag), nil
 }
 
 // modifyCache runs a read-modify-write of the cache under a cross-process

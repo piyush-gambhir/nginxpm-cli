@@ -2,7 +2,6 @@ package update
 
 import (
 	"bytes"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -15,14 +14,14 @@ import (
 	"github.com/gofrs/flock"
 )
 
-// latestServer answers GitHub's releases/latest with tag (or status when
-// non-zero) and counts requests.
+// latestServer answers github.com/<repo>/releases/latest with a redirect to
+// tag (or with status when non-zero) and counts requests.
 func latestServer(t *testing.T, tag string, status int) *atomic.Int32 {
 	t.Helper()
 	var hits atomic.Int32
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		hits.Add(1)
-		if r.URL.Path != "/repos/"+Repo+"/releases/latest" {
+		if r.URL.Path != "/"+Repo+"/releases/latest" {
 			http.NotFound(w, r)
 			return
 		}
@@ -30,13 +29,71 @@ func latestServer(t *testing.T, tag string, status int) *atomic.Int32 {
 			w.WriteHeader(status)
 			return
 		}
-		fmt.Fprintf(w, `{"tag_name": %q}`, tag)
+		w.Header().Set("Location", GitHubURL+"/"+Repo+"/releases/tag/"+tag)
+		w.WriteHeader(http.StatusFound)
 	}))
 	t.Cleanup(srv.Close)
-	orig := APIBaseURL
-	APIBaseURL = srv.URL
-	t.Cleanup(func() { APIBaseURL = orig })
+	setGitHubURL(t, srv.URL)
 	return &hits
+}
+
+func setGitHubURL(t *testing.T, u string) {
+	t.Helper()
+	orig := GitHubURL
+	GitHubURL = u
+	t.Cleanup(func() { GitHubURL = orig })
+}
+
+func TestFetchLatestReadsTheRedirectWithoutFollowingIt(t *testing.T) {
+	for _, tc := range []struct {
+		label    string
+		location string // "" sends no Location; "$" is replaced by the server URL
+		want     string
+	}{
+		{"semver v tag", "$/" + Repo + "/releases/tag/v0.1.11", "0.1.11"},
+		{"missing Location", "", ""},
+		{"foreign host", "https://evil.example/" + Repo + "/releases/tag/v0.1.11", ""},
+		{"other repository", "$/someone/else/releases/tag/v0.1.11", ""},
+		{"non-semver tag", "$/" + Repo + "/releases/tag/latest", ""},
+		{"tag without v", "$/" + Repo + "/releases/tag/0.1.11", ""},
+		{"pre-release tag", "$/" + Repo + "/releases/tag/v0.1.11-rc1", ""},
+		{"no releases yet", "$/" + Repo + "/releases", ""},
+	} {
+		t.Run(tc.label, func(t *testing.T) {
+			var followed atomic.Int32
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.URL.Path != "/"+Repo+"/releases/latest" {
+					followed.Add(1)
+					w.WriteHeader(http.StatusOK)
+					return
+				}
+				if tc.location != "" {
+					w.Header().Set("Location", strings.Replace(tc.location, "$", GitHubURL, 1))
+				}
+				w.WriteHeader(http.StatusFound)
+			}))
+			t.Cleanup(srv.Close)
+			setGitHubURL(t, srv.URL)
+
+			got, err := fetchLatest(BackgroundTimeout)
+			if tc.want != "" && (err != nil || got != tc.want) {
+				t.Fatalf("fetchLatest = %q, %v; want %q", got, err, tc.want)
+			}
+			if tc.want == "" && err == nil {
+				t.Fatalf("fetchLatest = %q, want an error", got)
+			}
+			if followed.Load() != 0 {
+				t.Fatal("fetchLatest followed the redirect")
+			}
+		})
+	}
+}
+
+func TestFetchLatestRejectsNonRedirect(t *testing.T) {
+	latestServer(t, "", http.StatusForbidden)
+	if _, err := fetchLatest(BackgroundTimeout); err == nil || !strings.Contains(err.Error(), "status 403") {
+		t.Fatalf("fetchLatest error = %v, want status 403", err)
+	}
 }
 
 func setNow(t *testing.T, at time.Time) {
@@ -178,12 +235,11 @@ func TestRefreshKeepsNoticeWrittenDuringRequest(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Another process announces 0.1.10 while this request is in flight.
 		writeCache(path, &cacheEntry{LastChecked: "2026-10-05T08:00:00Z", LatestVersion: "0.1.10", NotifiedVersion: "0.1.10", NotifiedAt: "2026-10-05T08:00:00Z"})
-		fmt.Fprint(w, `{"tag_name": "v0.1.10"}`)
+		w.Header().Set("Location", GitHubURL+"/"+Repo+"/releases/tag/v0.1.10")
+		w.WriteHeader(http.StatusFound)
 	}))
 	t.Cleanup(srv.Close)
-	orig := APIBaseURL
-	APIBaseURL = srv.URL
-	t.Cleanup(func() { APIBaseURL = orig })
+	setGitHubURL(t, srv.URL)
 	setNow(t, time.Date(2026, 10, 5, 9, 0, 0, 0, time.UTC))
 
 	CheckForUpdate("0.1.9", dir)
