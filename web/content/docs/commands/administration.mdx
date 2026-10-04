@@ -54,9 +54,11 @@ nginxpm update
 nginxpm completion zsh
 ```
 
-`nginxpm update` replaces the binary in place on macOS and Linux. On Windows it
-only checks: run `nginxpm update --check`, then download
-`nginxpm-cli_windows_<arch>.zip` from the release page and replace `nginxpm.exe`.
+`nginxpm update` installs the latest release on macOS, Linux, and Windows after
+verifying its checksum; `--yes` skips the prompt. `nginxpm update --check -o json`
+reports `current_version`, `latest_version`, `update_available`, `release_url`,
+and `install_method`. See [Update](/docs/installation#update) for the
+once-a-day notice and how to turn it off.
 
 Shell completion is available for `bash`, `zsh`, `fish`, and `powershell`.
 

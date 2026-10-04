@@ -264,6 +264,8 @@ nginxpm config use-profile staging
 - The `status` command does not require authentication -- useful for checking server availability.
 - Use `nginxpm config view` to check current connection settings and confirm which profile is active.
 - The `cert dns-providers` output is always JSON regardless of `--output` setting.
+- The new-version notice (stderr, at most once a day) only appears in an interactive terminal: never when stderr is piped, when `CI` is set, or with `--quiet`. Turn it off with `NGINXPM_NO_UPDATE_NOTIFIER=1` or `NO_UPDATE_NOTIFIER=1`.
+- `nginxpm update --check -o json` returns `current_version`, `latest_version`, `update_available`, `release_url`, and `install_method` (`self`, or `go` for a source build in a Go bin directory). Installing without a terminal needs `--yes`; `--read-only` blocks it.
 
 ## Complete Command Reference
 
@@ -274,7 +276,7 @@ nginxpm config use-profile staging
 | `nginxpm login` | Interactively log in and save a connection profile |
 | `nginxpm status` | Show server status, version, and setup state (no auth required) |
 | `nginxpm version` | Print CLI version, commit, and build date |
-| `nginxpm update` | Check for and install CLI updates (--check for check only; Windows supports only --check) |
+| `nginxpm update` | Install the latest release on macOS, Linux, or Windows (`--check` only checks, `-o json` supported; `--yes` skips the prompt) |
 | `nginxpm completion` | Generate shell completion scripts (bash, zsh, fish, powershell) |
 
 ### `nginxpm config` -- Manage CLI configuration

@@ -54,9 +54,11 @@ export default function PrivacyPage() {
             configure, to perform the actions you explicitly request.
           </li>
           <li>
-            <strong>GitHub&apos;s public API</strong>, to check whether a newer
-            release of the CLI is available. This request contains no personal
-            data.
+            <strong>GitHub</strong>, to check whether a newer release of the CLI
+            is available and, when you run <code>nginxpm update</code>, to
+            download it. The automatic check runs at most once a day and only in
+            an interactive terminal; set <code>NGINXPM_NO_UPDATE_NOTIFIER=1</code>{' '}
+            to turn it off. These requests contain no personal data.
           </li>
         </ul>
         <p>The maintainer is not a party to, and cannot observe, these connections.</p>

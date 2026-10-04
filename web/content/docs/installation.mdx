@@ -46,6 +46,37 @@ cd nginxpm-cli/cli-go && make install
 
 The binary is `nginxpm`.
 
+## Update
+
+```bash
+nginxpm update --check   # compare your version with the latest release
+nginxpm update           # download, verify, and install it
+```
+
+`nginxpm update` works on macOS, Linux, and Windows. It downloads the release
+archive for your platform, verifies its SHA-256 against the release's
+`checksums.txt`, and replaces the binary. On Windows the running `nginxpm.exe`
+is moved aside to `nginxpm.exe.old`, which the next run deletes. It asks before
+installing; pass `--yes` to skip the prompt (required with `--no-input` or
+without a terminal). If the binary's directory is not writable, re-run with
+`sudo` or reinstall with the install script into a writable `INSTALL_DIR`. A
+source build in a Go bin directory (`$GOBIN`, `$GOPATH/bin`, `~/go/bin`) is not
+replaced: run `git pull && make install` in your clone instead.
+
+In an interactive terminal, nginxpm checks GitHub for a new release at most once
+a day and, after the command's own output, prints a notice on stderr:
+
+```text
+A new version of nginxpm is available: v0.1.9 -> v0.1.10
+Update with: nginxpm update
+Release notes: https://github.com/piyush-gambhir/nginxpm-cli/releases/tag/v0.1.10
+```
+
+The check never runs when stderr is not a terminal (pipes, scripts, coding
+agents), when `CI` is set, with `--quiet`, or for `update`, `version`,
+`completion`, and `help`. Turn it off with `NGINXPM_NO_UPDATE_NOTIFIER=1` or
+`NO_UPDATE_NOTIFIER=1`.
+
 Continue with [authentication](/docs/authentication), then use the
 [quick start](/docs/quickstart) to verify the connection.
 
