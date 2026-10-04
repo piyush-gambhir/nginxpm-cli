@@ -13,7 +13,7 @@ Designed for both human operators and coding agents (LLMs). All commands support
 - Full API coverage -- proxy hosts, redirections, streams, dead hosts, certificates, access lists, users, audit log, settings
 - Multiple output formats -- table, JSON, YAML (`-o json`)
 - Profile management -- multiple NPM instances with `--profile`
-- Auto-update -- checks for new versions, `nginxpm update` to self-update
+- Auto-update -- checks for new versions, `nginxpm update` to self-update (macOS and Linux; on Windows, download the new release manually)
 - Agent-friendly -- comprehensive help text, structured output for LLM coding agents (`CLAUDE.md` guide, `SKILL.md` for Cursor-style skills)
 - Cross-platform -- macOS, Linux, Windows (amd64 and arm64)
 
@@ -28,7 +28,7 @@ curl -sSfL https://raw.githubusercontent.com/piyush-gambhir/nginxpm-cli/main/ins
 Install a specific version:
 
 ```bash
-curl -sSfL https://raw.githubusercontent.com/piyush-gambhir/nginxpm-cli/main/install.sh | VERSION=0.1.1 sh
+curl -sSfL https://raw.githubusercontent.com/piyush-gambhir/nginxpm-cli/main/install.sh | VERSION=0.1.7 sh
 ```
 
 The installer detects your OS/arch (macOS and Linux, amd64 and arm64) and installs the `nginxpm` binary to `/usr/local/bin` (override with `INSTALL_DIR`).
@@ -38,7 +38,7 @@ The installer detects your OS/arch (macOS and Linux, amd64 and arm64) and instal
 Download a prebuilt binary from the [releases page](https://github.com/piyush-gambhir/nginxpm-cli/releases), then extract and install it. For example, macOS arm64:
 
 ```bash
-curl -sSfL -o nginxpm.tar.gz https://github.com/piyush-gambhir/nginxpm-cli/releases/download/v0.1.1/nginxpm-cli_darwin_arm64.tar.gz
+curl -sSfL -o nginxpm.tar.gz https://github.com/piyush-gambhir/nginxpm-cli/releases/download/v0.1.7/nginxpm-cli_darwin_arm64.tar.gz
 tar -xzf nginxpm.tar.gz
 sudo mv nginxpm /usr/local/bin/
 ```
@@ -138,7 +138,7 @@ nginxpm proxy list --profile staging
 | `nginxpm login` | Interactive authentication setup | |
 | `nginxpm status` | Show server status (no auth required) | |
 | `nginxpm version` | Print CLI version | |
-| `nginxpm update` | Self-update to latest version | |
+| `nginxpm update` | Self-update to latest version (`--check` only on Windows) | |
 | `nginxpm completion` | Generate shell completions | |
 
 ## Proxy Hosts

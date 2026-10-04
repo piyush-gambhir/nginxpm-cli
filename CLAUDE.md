@@ -274,7 +274,7 @@ nginxpm config use-profile staging
 | `nginxpm login` | Interactively log in and save a connection profile |
 | `nginxpm status` | Show server status, version, and setup state (no auth required) |
 | `nginxpm version` | Print CLI version, commit, and build date |
-| `nginxpm update` | Check for and install CLI updates (--check for check only) |
+| `nginxpm update` | Check for and install CLI updates (--check for check only; Windows supports only --check) |
 | `nginxpm completion` | Generate shell completion scripts (bash, zsh, fish, powershell) |
 
 ### `nginxpm config` -- Manage CLI configuration

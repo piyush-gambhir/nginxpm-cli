@@ -5,6 +5,7 @@ import (
 	"compress/gzip"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -44,5 +45,29 @@ func TestExtractBinaryStaysInDestDir(t *testing.T) {
 	data, err := os.ReadFile(got)
 	if err != nil || string(data) != string(payload) {
 		t.Fatalf("extracted %q, %v; want %q", data, err, payload)
+	}
+}
+
+func TestCheckSelfUpdateSupported(t *testing.T) {
+	const releaseURL = "https://github.com/piyush-gambhir/nginxpm-cli/releases/tag/v9.9.9"
+	orig := goos
+	t.Cleanup(func() { goos = orig })
+
+	goos = "windows"
+	err := checkSelfUpdateSupported(releaseURL)
+	if err == nil {
+		t.Fatal("expected an error on windows")
+	}
+	for _, want := range []string{"nginxpm.exe", releaseURL, ".zip"} {
+		if !strings.Contains(err.Error(), want) {
+			t.Errorf("error %q does not mention %q", err, want)
+		}
+	}
+
+	for _, name := range []string{"linux", "darwin"} {
+		goos = name
+		if err := checkSelfUpdateSupported(releaseURL); err != nil {
+			t.Errorf("%s: unexpected error: %v", name, err)
+		}
 	}
 }

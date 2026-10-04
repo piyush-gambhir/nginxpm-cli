@@ -9,3 +9,7 @@
 .env.deploy.development
 !.env.example
 !.env.deploy.example
+
+# Build output: CLI binaries ship through GitHub Releases, never in git.
+nginxpm-cli
+*.exe

@@ -63,7 +63,7 @@ nginxpm update --check
 nginxpm update
 ```
 
-`nginxpm update` downloads `nginxpm-cli_<os>_<arch>.tar.gz` from the matching GitHub release, verifies it against `checksums.txt`, then atomically replaces the current executable (may require `sudo` if the binary lives in a root-owned path). Non-`update`/`version`/`completion`/`help` commands also run a background update check and print a one-line notice on stderr when an upgrade is available.
+`nginxpm update` downloads `nginxpm-cli_<os>_<arch>.tar.gz` from the matching GitHub release, verifies it against `checksums.txt`, then atomically replaces the current executable (may require `sudo` if the binary lives in a root-owned path). On Windows, `nginxpm update` does not install: it exits with an error pointing at the release page, where you download `nginxpm-cli_windows_<arch>.zip` and replace `nginxpm.exe` yourself (`nginxpm update --check` works on every OS). Non-`update`/`version`/`completion`/`help` commands also run a background update check and print a one-line notice on stderr when an upgrade is available.
 
 ## Authentication
 
@@ -443,7 +443,7 @@ Prints `nginxpm-cli version <v>`, the commit hash, and the build date.
 nginxpm update [--check]
 ```
 
-See the [Self-update](#self-update) section above. `--check` only reports availability; bare `update` prompts before installing. Disabled for `dev` builds.
+See the [Self-update](#self-update) section above. `--check` only reports availability; bare `update` prompts before installing. Disabled for `dev` builds. Install is not supported on Windows (`--check` is).
 
 ### completion, shell completions (no auth)
 
