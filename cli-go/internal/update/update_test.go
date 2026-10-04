@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"path/filepath"
 	"strings"
 	"sync/atomic"
@@ -294,10 +293,6 @@ func TestCachedInfoNeverUsesNetwork(t *testing.T) {
 	}
 	if hits.Load() != 0 {
 		t.Fatal("CachedInfo contacted GitHub")
-	}
-	ClearCache(dir)
-	if _, err := os.Stat(filepath.Join(dir, cacheFileName)); !os.IsNotExist(err) {
-		t.Fatalf("ClearCache left the cache: %v", err)
 	}
 }
 

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -121,12 +122,15 @@ func createClient(ctx context.Context, f *cmdutil.Factory, resolved *config.Reso
 	}
 }
 
-// Seams for tests: whether stderr is a terminal, and how long
-// PersistentPostRun waits for the background update check (0: only print a
-// result that is already available, never delay the command).
 var (
+	// stderrIsTerminal is a seam for tests.
 	stderrIsTerminal = func() bool { return term.IsTerminal(int(os.Stderr.Fd())) }
-	updateNoticeWait time.Duration
+	// updateNoticeWait is how long PersistentPostRun waits for a release
+	// check that this run started and that has not answered yet, so a fast
+	// command does not lose the day's check. A cached result never waits.
+	updateNoticeWait = time.Second
+	// backgroundChecks lets tests wait for a check that outlived its command.
+	backgroundChecks sync.WaitGroup
 )
 
 // skipUpdateCheck reports whether the background release check must not run
@@ -179,7 +183,7 @@ Claude Code skill: https://github.com/piyush-gambhir/nginxpm-cli/blob/main/nginx
 			f.Verbose = flagVerbose
 
 			// Start the background update check; PersistentPostRun prints
-			// the notice only if the result is already in.
+			// the notice once the result is in.
 			cmdName := cmd.Name()
 			if !skipUpdateCheck(cmd) {
 				result := make(chan *update.UpdateInfo, 1)
@@ -190,9 +194,11 @@ Claude Code skill: https://github.com/piyush-gambhir/nginxpm-cli/blob/main/nginx
 				if info, fresh := update.CachedResult(build.Version, config.ConfigDir()); fresh {
 					result <- info
 				} else {
-					go func() {
-						result <- update.CheckForUpdate(build.Version, config.ConfigDir())
-					}()
+					backgroundChecks.Add(1)
+					go func(version, configDir string) {
+						defer backgroundChecks.Done()
+						result <- update.CheckForUpdate(version, configDir)
+					}(build.Version, config.ConfigDir())
 				}
 			}
 
@@ -235,16 +241,16 @@ Claude Code skill: https://github.com/piyush-gambhir/nginxpm-cli/blob/main/nginx
 			if updateResult == nil {
 				return
 			}
+			// Only a network check started by this run can still be pending
+			// (a cached result is already in the channel). It runs at most
+			// once a day, so waiting briefly for it costs little.
 			var info *update.UpdateInfo
-			if updateNoticeWait > 0 {
+			select {
+			case info = <-updateResult:
+			default:
 				select {
 				case info = <-updateResult:
 				case <-time.After(updateNoticeWait):
-				}
-			} else {
-				select {
-				case info = <-updateResult:
-				default:
 				}
 			}
 			if info != nil && info.Available {

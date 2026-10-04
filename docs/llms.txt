@@ -71,7 +71,7 @@ nginxpm update
 
 ### Update notice
 
-In an interactive terminal, other commands check GitHub for the latest release in the background (3-second timeout, result cached for 24 hours in `~/.config/nginxpm-cli/update-check.json`, failures cached too) and never delay the command. When a newer release exists, this prints on stderr after the command's output, once per release per 24 hours:
+In an interactive terminal, other commands check GitHub for the latest release in the background (3-second timeout, result cached for 24 hours in `~/.config/nginxpm-cli/update-check.json`, failures cached too). On the one run a day that asks GitHub, the command waits at most 1 second extra for the answer; otherwise it never delays the command. `nginxpm update --check` and `nginxpm update` store their result in the same cache. When a newer release exists, this prints on stderr after the command's output, once per release per 24 hours:
 
 ```text
 A new version of nginxpm is available: v0.1.9 -> v0.1.10
