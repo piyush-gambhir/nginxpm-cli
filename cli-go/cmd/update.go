@@ -30,8 +30,11 @@ func newUpdateCmd() *cobra.Command {
 		Use:         "update",
 		Annotations: map[string]string{"mutates": "true"},
 		Short:       "Update nginxpm to the latest version",
-		Long:        "Check for and install the latest version of the nginxpm CLI from GitHub Releases.",
-		Args:        cobra.NoArgs,
+		Long: `Check for and install the latest version of the nginxpm CLI from GitHub Releases.
+
+On Windows, self-update is not supported: use --check to see whether a newer
+release exists, then download the .zip from the release page and replace nginxpm.exe.`,
+		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			configDir := config.ConfigDir()
 			currentVersion := build.Version
@@ -70,6 +73,9 @@ func newUpdateCmd() *cobra.Command {
 				}
 			}
 			fmt.Fprintf(cmd.OutOrStdout(), "Release:   %s\n\n", info.ReleaseURL)
+			if err := checkSelfUpdateSupported(info.ReleaseURL); err != nil {
+				return err
+			}
 			if flagNoInput {
 				return fmt.Errorf("update requires confirmation; cannot run with --no-input (use --check to check only)")
 			}
@@ -90,6 +96,19 @@ func newUpdateCmd() *cobra.Command {
 	cmd.Flags().BoolVar(&checkOnly, "check", false, "Only check if an update is available, don't install")
 
 	return cmd
+}
+
+// goos is the target OS; tests override it to exercise other platforms.
+var goos = runtime.GOOS
+
+// checkSelfUpdateSupported refuses to install on Windows: releases ship a .zip
+// there (not the .tar.gz performUpdate downloads), and a running .exe cannot be
+// replaced in place.
+func checkSelfUpdateSupported(releaseURL string) error {
+	if goos == "windows" {
+		return fmt.Errorf("self-update is not supported on Windows: download nginxpm-cli_windows_%s.zip from %s and replace nginxpm.exe", runtime.GOARCH, releaseURL)
+	}
+	return nil
 }
 
 func performUpdate(ctx context.Context, w io.Writer, version string) error {

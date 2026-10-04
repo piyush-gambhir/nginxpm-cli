@@ -13,7 +13,7 @@ Designed for both human operators and coding agents (LLMs). All commands support
 - Full API coverage -- proxy hosts, redirections, streams, dead hosts, certificates, access lists, users, audit log, settings
 - Multiple output formats -- table, JSON, YAML (`-o json`)
 - Profile management -- multiple NPM instances with `--profile`
-- Auto-update -- checks for new versions, `nginxpm update` to self-update
+- Auto-update -- checks for new versions, `nginxpm update` to self-update (macOS and Linux; on Windows, download the new release manually)
 - Agent-friendly -- comprehensive help text, structured output for LLM coding agents (`CLAUDE.md` guide, `SKILL.md` for Cursor-style skills)
 - Cross-platform -- macOS, Linux, Windows (amd64 and arm64)
 
@@ -138,7 +138,7 @@ nginxpm proxy list --profile staging
 | `nginxpm login` | Interactive authentication setup | |
 | `nginxpm status` | Show server status (no auth required) | |
 | `nginxpm version` | Print CLI version | |
-| `nginxpm update` | Self-update to latest version | |
+| `nginxpm update` | Self-update to latest version (`--check` only on Windows) | |
 | `nginxpm completion` | Generate shell completions | |
 
 ## Proxy Hosts

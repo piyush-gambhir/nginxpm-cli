@@ -9,7 +9,7 @@ Quick reference of all commands. For full details, see `CLAUDE.md` or run `nginx
 | `nginxpm login` | Interactively log in and save a connection profile |
 | `nginxpm status` | Show server status (no auth required) |
 | `nginxpm version` | Print CLI version, commit, and build date |
-| `nginxpm update` | Check for and install CLI updates (`--check` for check only) |
+| `nginxpm update` | Check for and install CLI updates (`--check` for check only; Windows supports only `--check`) |
 | `nginxpm completion` | Generate shell completion scripts |
 
 ## `nginxpm config` -- Manage CLI configuration
