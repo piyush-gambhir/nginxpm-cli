@@ -277,6 +277,7 @@ Claude Code skill: https://github.com/piyush-gambhir/nginxpm-cli/blob/main/nginx
 	rootCmd.AddCommand(newUpdateCmd())
 	rootCmd.AddCommand(newLoginCmd(f))
 	rootCmd.AddCommand(newCompletionCmd())
+	rootCmd.AddCommand(newCommandsCmd())
 	rootCmd.AddCommand(newStatusCmd(f))
 	rootCmd.AddCommand(cmdconfig.NewCmdConfig(f))
 	rootCmd.AddCommand(proxy.NewCmdProxy(f))

@@ -4,6 +4,8 @@ A command-line interface for managing Nginx Proxy Manager instances -- proxy hos
 
 Designed for both human operators and coding agents (LLMs). All commands support `--help` for detailed usage, and `-o json` / `-o yaml` for machine-readable output.
 
+Use `nginxpm commands resolve -- <arguments>` to inspect the parsed command, effect, flags, and positional arguments offline as JSON, without running it or loading configuration.
+
 [![Go Version](https://img.shields.io/github/go-mod/go-version/piyush-gambhir/nginxpm-cli)](https://go.dev/)
 [![Release](https://img.shields.io/github/v/release/piyush-gambhir/nginxpm-cli)](https://github.com/piyush-gambhir/nginxpm-cli/releases)
 [![License](https://img.shields.io/github/license/piyush-gambhir/nginxpm-cli)](LICENSE)
