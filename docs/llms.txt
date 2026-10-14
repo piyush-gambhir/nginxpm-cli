@@ -179,9 +179,19 @@ Top-level command map:
 | `status` | | Show server status | no (URL only) |
 | `version` | | Print CLI version/commit/build date | no |
 | `update` | | Self-update the CLI | no |
+| `commands` | | Offline command discovery | no |
 | `completion` | | Generate shell completion scripts | no |
 
 Conventions used below: `<id>` is a positional numeric ID (NPM resource ID). List sub-commands accept the alias `ls`. Bodies for `create`/`update` come from `-f <file|->` as JSON or YAML. Deletes prompt for confirmation unless `--confirm` (or `--no-input`, which makes confirmation fail closed, supply `--confirm` to delete non-interactively).
+
+### commands, offline argument resolution
+
+```bash
+nginxpm commands resolve -- proxy list
+nginxpm commands resolve -- -o json proxy delete 1 --confirm
+```
+
+`commands` groups discovery commands. `commands resolve -- <arguments>` uses a fresh CLI command tree and the real Cobra parser without executing the target, loading configuration, reading credentials, or contacting the network. Output is always JSON with `command`, `effect` (`read`, `remote_write`, or `local_write`), `conditional`, `interactive`, `secret_output`, explicitly set `flags`, and positional `args`. Unknown commands, non-runnable groups, and invalid flags exit 1 through the normal JSON error path. It reports command annotations and parsed flags; it does not validate positional argument counts, required flags, or runtime inputs.
 
 ### proxy, manage proxy hosts
 
