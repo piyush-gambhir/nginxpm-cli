@@ -32,6 +32,8 @@ All list/get commands support three output formats via `-o`:
 
 **For agents:** Always use `-o json` when you need to parse or process output programmatically.
 
+Use `nginxpm commands resolve -- <arguments>` to inspect the parsed command, effect, flags, and positional arguments offline as JSON, without running it or loading configuration.
+
 ## Common Workflows
 
 ### Check server status
@@ -277,6 +279,7 @@ nginxpm config use-profile staging
 | `nginxpm status` | Show server status, version, and setup state (no auth required) |
 | `nginxpm version` | Print CLI version, commit, and build date |
 | `nginxpm update` | Install the latest release on macOS, Linux, or Windows (`--check` only checks, `-o json` supported; `--yes` skips the prompt) |
+| `nginxpm commands resolve -- <arguments>` | Resolve arguments offline as JSON without executing them |
 | `nginxpm completion` | Generate shell completion scripts (bash, zsh, fish, powershell) |
 
 ### `nginxpm config` -- Manage CLI configuration

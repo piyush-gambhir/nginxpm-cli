@@ -24,6 +24,8 @@ The full command reference, workflows, and examples live in **`CLAUDE.md`** in t
 | Read-only safety | set `NGINXPM_READ_ONLY=true` or pass `--read-only` to block server mutations |
 | Updates | `nginxpm update --check -o json`; `nginxpm update --yes` installs (macOS, Linux, Windows). The once-a-day new-version notice only shows in an interactive terminal; `NGINXPM_NO_UPDATE_NOTIFIER=1` turns it off |
 
+Use `nginxpm commands resolve -- <arguments>` to inspect the parsed command, effect, flags, and positional arguments offline as JSON, without running it or loading configuration.
+
 ## Discovering commands
 
 Cobra adds **`-h` / `--help`** on the root and every subcommand:
