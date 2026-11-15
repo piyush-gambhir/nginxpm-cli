@@ -6,7 +6,6 @@ import (
 	"github.com/piyush-gambhir/nginxpm-cli/cli-go/internal/cmdutil"
 )
 
-// NewCmdAudit returns the audit parent command.
 func NewCmdAudit(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "audit",

@@ -6,7 +6,6 @@ import (
 	"github.com/piyush-gambhir/nginxpm-cli/cli-go/internal/cmdutil"
 )
 
-// NewCmdProxy returns the proxy parent command.
 func NewCmdProxy(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "proxy",

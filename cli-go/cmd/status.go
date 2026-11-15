@@ -24,7 +24,6 @@ Examples:
   nginxpm status -o json`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// Status doesn't need auth, just the URL.
 			url := ""
 			outputFmt := "table"
 			if f.Resolved != nil {

@@ -15,7 +15,6 @@ import (
 )
 
 func TestCommandsResolve(t *testing.T) {
-	// Malformed config and a release build ensure resolution bypasses normal setup.
 	configHome := t.TempDir()
 	t.Setenv("XDG_CONFIG_HOME", configHome)
 	for _, key := range []string{"CI", "NGINXPM_NO_UPDATE_NOTIFIER", "NO_UPDATE_NOTIFIER", "NGINXPM_QUIET"} {

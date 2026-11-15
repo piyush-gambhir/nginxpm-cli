@@ -37,7 +37,6 @@ Examples:
 			reader := bufio.NewReader(os.Stdin)
 			out := f.IOStreams.Out
 
-			// Prompt for URL.
 			fmt.Fprint(out, "Nginx Proxy Manager URL: ")
 			urlStr, _ := reader.ReadString('\n')
 			urlStr = strings.TrimSpace(urlStr)
@@ -45,7 +44,6 @@ Examples:
 				return fmt.Errorf("URL is required")
 			}
 
-			// Prompt for Email.
 			fmt.Fprint(out, "Email: ")
 			email, _ := reader.ReadString('\n')
 			email = strings.TrimSpace(email)
@@ -53,7 +51,6 @@ Examples:
 				return fmt.Errorf("email is required")
 			}
 
-			// Prompt for Password.
 			password, err := readLoginSecret(reader, out, "Password: ")
 			if err != nil {
 				return err
@@ -62,7 +59,6 @@ Examples:
 				return fmt.Errorf("password is required")
 			}
 
-			// Prompt for TLS skip verification.
 			fmt.Fprint(out, "Skip TLS verification? (y/N) [N]: ")
 			insecureStr, _ := reader.ReadString('\n')
 			insecureStr = strings.TrimSpace(strings.ToLower(insecureStr))
@@ -75,7 +71,6 @@ Examples:
 				Insecure: insecure,
 			}
 
-			// Test connection by verifying the server is reachable (no auth needed).
 			fmt.Fprintln(out, "Testing connection...")
 			c := client.NewClientWithToken(urlStr, insecure)
 			if f.Verbose {
@@ -88,7 +83,6 @@ Examples:
 			}
 			fmt.Fprintln(out, "Server is reachable.")
 
-			// Authenticate with the provided credentials.
 			fmt.Fprintln(out, "Authenticating...")
 			resolved := &config.ResolvedConfig{
 				URL:      profile.URL,
@@ -100,11 +94,10 @@ Examples:
 			if err != nil {
 				return fmt.Errorf("authentication failed: %w", err)
 			}
-			_ = authClient // authentication succeeded if no error
+			_ = authClient
 
 			fmt.Fprintln(out, "Authentication successful!")
 
-			// Prompt for profile name.
 			fmt.Fprint(out, "Profile name [default]: ")
 			profileName, _ := reader.ReadString('\n')
 			profileName = strings.TrimSpace(profileName)

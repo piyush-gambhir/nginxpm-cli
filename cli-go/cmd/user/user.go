@@ -6,7 +6,6 @@ import (
 	"github.com/piyush-gambhir/nginxpm-cli/cli-go/internal/cmdutil"
 )
 
-// NewCmdUser returns the user parent command.
 func NewCmdUser(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "user",

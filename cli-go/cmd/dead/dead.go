@@ -6,7 +6,6 @@ import (
 	"github.com/piyush-gambhir/nginxpm-cli/cli-go/internal/cmdutil"
 )
 
-// NewCmdDead returns the dead host parent command.
 func NewCmdDead(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "dead",

@@ -8,15 +8,12 @@ import (
 	"time"
 )
 
-// authHeaders is the set of headers that contain secrets and must be redacted.
 var authHeaders = map[string]bool{
 	"Authorization": true,
 	"Cookie":        true,
 	"Set-Cookie":    true,
 }
 
-// redactAuthHeaders returns a shallow copy of the header map with auth-sensitive
-// headers replaced by "[REDACTED]". Non-secret headers are kept intact.
 func redactAuthHeaders(h http.Header) http.Header {
 	redacted := make(http.Header, len(h))
 	for key, values := range h {
@@ -29,7 +26,6 @@ func redactAuthHeaders(h http.Header) http.Header {
 	return redacted
 }
 
-// verboseTransport wraps an http.RoundTripper and logs requests/responses to stderr.
 type verboseTransport struct {
 	inner  http.RoundTripper
 	output io.Writer
@@ -38,10 +34,8 @@ type verboseTransport struct {
 func (t *verboseTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	start := time.Now()
 
-	// Log request.
 	fmt.Fprintf(t.output, "--> %s %s\n", req.Method, req.URL.String())
 
-	// Log headers with auth secrets redacted.
 	for key, values := range redactAuthHeaders(req.Header) {
 		for _, v := range values {
 			fmt.Fprintf(t.output, "    %s: %s\n", key, v)
@@ -56,7 +50,6 @@ func (t *verboseTransport) RoundTrip(req *http.Request) (*http.Response, error) 
 
 	fmt.Fprintf(t.output, "<-- %d %s (%s)\n", resp.StatusCode, http.StatusText(resp.StatusCode), time.Since(start).Round(time.Millisecond))
 
-	// Log response headers with auth secrets redacted.
 	for key, values := range redactAuthHeaders(resp.Header) {
 		for _, v := range values {
 			fmt.Fprintf(t.output, "    %s: %s\n", key, v)
@@ -66,7 +59,6 @@ func (t *verboseTransport) RoundTrip(req *http.Request) (*http.Response, error) 
 	return resp, nil
 }
 
-// EnableVerboseLogging wraps the client's HTTP transport with verbose logging.
 func (c *Client) EnableVerboseLogging(w io.Writer) {
 	transport := c.HTTPClient.Transport
 	if transport == nil {
@@ -75,7 +67,6 @@ func (c *Client) EnableVerboseLogging(w io.Writer) {
 	c.HTTPClient.Transport = &verboseTransport{inner: transport, output: w}
 }
 
-// buildTLSConfig creates a TLS configuration for insecure skip verification.
 func buildTLSConfig(insecure bool) *tls.Config {
 	return &tls.Config{
 		InsecureSkipVerify: insecure,

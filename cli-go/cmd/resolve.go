@@ -11,7 +11,6 @@ import (
 	"github.com/piyush-gambhir/nginxpm-cli/cli-go/internal/output"
 )
 
-// resolution describes arguments using the parser without running the command.
 type resolution struct {
 	Command     string            `json:"command"`
 	Effect      string            `json:"effect"`
@@ -40,7 +39,6 @@ func newResolveCmd() *cobra.Command {
 		Example:            "  nginxpm commands resolve -- proxy list\n  nginxpm commands resolve -- -o json proxy delete 1 --confirm",
 		DisableFlagParsing: true,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			// Override config/auth setup and the background update check, including on errors.
 			OutputFormat = "json"
 			return nil
 		},

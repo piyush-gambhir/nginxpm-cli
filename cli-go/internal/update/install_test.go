@@ -22,8 +22,8 @@ import (
 type archiveEntry struct {
 	name     string
 	body     string
-	typeflag byte // tar only; 0 means regular file
-	symlink  bool // zip only
+	typeflag byte
+	symlink  bool
 }
 
 func tarGz(t *testing.T, entries ...archiveEntry) []byte {
@@ -79,8 +79,6 @@ func zipArchive(t *testing.T, entries ...archiveEntry) []byte {
 	return buf.Bytes()
 }
 
-// releaseServer serves one release's archive and checksums.txt the way
-// GitHub release downloads are laid out.
 func releaseServer(t *testing.T, version, archiveName string, archive []byte, checksums string) *httptest.Server {
 	t.Helper()
 	prefix := fmt.Sprintf("/%s/releases/download/v%s/", Repo, version)
@@ -104,7 +102,6 @@ func sha(b []byte) string {
 	return hex.EncodeToString(sum[:])
 }
 
-// installedExe creates a stand-in for the running executable.
 func installedExe(t *testing.T, name string) string {
 	t.Helper()
 	exe := filepath.Join(t.TempDir(), name)
@@ -167,7 +164,6 @@ func TestInstallWindowsMovesRunningExeAside(t *testing.T) {
 	name := ArchiveName("windows", "amd64")
 	releaseServer(t, "0.2.0", name, archive, sha(archive)+"  "+name+"\n")
 	exe := installedExe(t, "nginxpm.exe")
-	// A leftover from an earlier update must not block this one.
 	if err := os.WriteFile(exe+".old", []byte("older"), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -202,8 +198,6 @@ func TestReplaceWindowsRestoresOldExeOnFailure(t *testing.T) {
 	if err := os.WriteFile(src, []byte("new exe"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	// Fail the step that moves the staged exe into place, after the running
-	// exe has already been moved aside.
 	orig := rename
 	t.Cleanup(func() { rename = orig })
 	rename = func(from, to string) error {

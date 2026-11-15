@@ -6,7 +6,6 @@ import (
 	"github.com/piyush-gambhir/nginxpm-cli/cli-go/internal/cmdutil"
 )
 
-// NewCmdAccess returns the access list parent command.
 func NewCmdAccess(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "access",

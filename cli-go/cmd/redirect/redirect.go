@@ -6,7 +6,6 @@ import (
 	"github.com/piyush-gambhir/nginxpm-cli/cli-go/internal/cmdutil"
 )
 
-// NewCmdRedirect returns the redirect parent command.
 func NewCmdRedirect(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "redirect",

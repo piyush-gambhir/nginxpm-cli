@@ -7,8 +7,6 @@ import { getOtherSuiteProjects } from '@/lib/suite';
 export const revalidate = false;
 
 export async function GET() {
-  // index() returns a Promise since fumadocs-core 16.15.17. Its links are
-  // root-relative (/docs/...), which miss the basePath, so make them absolute.
   const [heading, ...sections] = absoluteLinks(await llms(source).index()).split('\n\n');
   const preamble =
     'nginxpm CLI is agent-ready and harness-agnostic: Claude Code, OpenAI Codex, Cursor, or any agent harness that can run shell commands can manage Nginx Proxy Manager hosts, streams, and certificates through structured JSON/YAML output, read-only mode, and no-input automation flags.';

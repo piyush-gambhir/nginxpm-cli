@@ -5,8 +5,6 @@ import (
 	"testing"
 )
 
-// NPM releases before v2.12.0 encode database boolean columns as JSON
-// numbers (0/1). Newer releases use real booleans. Bool must accept both.
 func TestBoolUnmarshalJSON(t *testing.T) {
 	cases := []struct {
 		in      string
@@ -45,8 +43,6 @@ func TestBoolUnmarshalJSON(t *testing.T) {
 	}
 }
 
-// Decoding a proxy host payload in the pre-v2.12.0 NPM format (0/1
-// integers for booleans) must succeed.
 func TestProxyHostDecodeIntBooleans(t *testing.T) {
 	payload := `{
 		"id": 7,

@@ -14,8 +14,6 @@ import (
 	"github.com/gofrs/flock"
 )
 
-// latestServer answers github.com/<repo>/releases/latest with a redirect to
-// tag (or with status when non-zero) and counts requests.
 func latestServer(t *testing.T, tag string, status int) *atomic.Int32 {
 	t.Helper()
 	var hits atomic.Int32
@@ -47,7 +45,7 @@ func setGitHubURL(t *testing.T, u string) {
 func TestFetchLatestReadsTheRedirectWithoutFollowingIt(t *testing.T) {
 	for _, tc := range []struct {
 		label    string
-		location string // "" sends no Location; "$" is replaced by the server URL
+		location string
 		want     string
 	}{
 		{"semver v tag", "$/" + Repo + "/releases/tag/v0.1.11", "0.1.11"},
@@ -241,7 +239,6 @@ func TestRefreshKeepsNoticeWrittenDuringRequest(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, cacheFileName)
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Another process announces 0.1.10 while this request is in flight.
 		writeCache(path, &cacheEntry{LastChecked: "2026-10-05T08:00:00Z", LatestVersion: "0.1.10", NotifiedVersion: "0.1.10", NotifiedAt: "2026-10-05T08:00:00Z"})
 		w.Header().Set("Location", GitHubURL+"/"+Repo+"/releases/tag/v0.1.10")
 		w.WriteHeader(http.StatusFound)

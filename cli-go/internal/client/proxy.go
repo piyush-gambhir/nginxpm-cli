@@ -15,7 +15,7 @@ type ProxyHost struct {
 	ForwardPort           int                    `json:"forward_port"`
 	ForwardScheme         string                 `json:"forward_scheme"`
 	AccessListID          int                    `json:"access_list_id"`
-	CertificateID         interface{}            `json:"certificate_id"` // int or "new"
+	CertificateID         interface{}            `json:"certificate_id"`
 	SSLForced             Bool                   `json:"ssl_forced"`
 	HSTSEnabled           Bool                   `json:"hsts_enabled"`
 	HSTSSubdomains        Bool                   `json:"hsts_subdomains"`

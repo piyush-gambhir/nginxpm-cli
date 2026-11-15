@@ -20,7 +20,6 @@ import (
 )
 
 const (
-	// maxReleaseArtifactBytes caps every download and the extracted binary.
 	maxReleaseArtifactBytes int64 = 256 << 20
 	maxChecksumsBytes       int64 = 1 << 20
 	downloadTimeout               = 120 * time.Second
@@ -28,22 +27,15 @@ const (
 	binaryName                    = "nginxpm"
 )
 
-// rename is os.Rename; tests override it to fail a specific step.
 var rename = os.Rename
 
-// Installer downloads a release archive, verifies it against checksums.txt,
-// and replaces ExecPath with the binary inside. GOOS and GOARCH pick the
-// archive and the replacement strategy, so tests can run every platform's
-// logic on any OS.
 type Installer struct {
 	GOOS     string
 	GOARCH   string
-	ExecPath string    // resolved path of the executable to replace
-	Out      io.Writer // progress messages
+	ExecPath string
+	Out      io.Writer
 }
 
-// ArchiveName is the GoReleaser archive for goos/goarch
-// (name_template "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}", zip on Windows).
 func ArchiveName(goos, goarch string) string {
 	ext := "tar.gz"
 	if goos == "windows" {
@@ -52,8 +44,6 @@ func ArchiveName(goos, goarch string) string {
 	return fmt.Sprintf("%s_%s_%s.%s", projectName, goos, goarch, ext)
 }
 
-// Install replaces in.ExecPath with release version. On any failure the old
-// binary is left in place and working.
 func (in *Installer) Install(ctx context.Context, version string) error {
 	version = trimV(version)
 	if !releaseTagPattern.MatchString(version) {
@@ -103,8 +93,6 @@ func (in *Installer) Install(ctx context.Context, version string) error {
 	return nil
 }
 
-// RemoveLeftoverBinary deletes the <exe>.old that a Windows update leaves
-// behind (a running .exe cannot delete itself). Best effort; no-op elsewhere.
 func RemoveLeftoverBinary(goos, execPath string) {
 	if goos != "windows" || execPath == "" {
 		return
@@ -112,8 +100,6 @@ func RemoveLeftoverBinary(goos, execPath string) {
 	_ = os.Remove(execPath + ".old")
 }
 
-// checkWritable fails with a clear message when the update cannot be written
-// next to the executable, before anything is downloaded.
 func checkWritable(dir, goos string) error {
 	f, err := os.CreateTemp(dir, ".nginxpm-write-test-*")
 	if err != nil {
@@ -153,7 +139,6 @@ func download(ctx context.Context, dst, url string, limit int64) error {
 	return out.Close()
 }
 
-// copyLimited copies src to dst and fails if src holds more than limit bytes.
 func copyLimited(dst io.Writer, src io.Reader, limit int64) error {
 	written, err := io.CopyN(dst, src, limit+1)
 	if err != nil && err != io.EOF {
@@ -165,8 +150,6 @@ func copyLimited(dst io.Writer, src io.Reader, limit int64) error {
 	return nil
 }
 
-// verifyChecksum checks filePath against the "<sha256>  <name>" line for name
-// in checksums.txt, refusing a missing entry or a mismatch.
 func verifyChecksum(filePath, checksumsPath, name string) error {
 	sums, err := os.Open(checksumsPath)
 	if err != nil {
@@ -204,9 +187,6 @@ func verifyChecksum(filePath, checksumsPath, name string) error {
 	return nil
 }
 
-// extractBinary writes the release binary from the archive to a fixed name in
-// destDir, so no part of an archive entry name reaches the filesystem (zip
-// slip). Unsafe entry names and a non-regular binary entry are refused.
 func extractBinary(archivePath, destDir, goos string) (string, error) {
 	want := binaryName
 	if goos == "windows" {
@@ -219,8 +199,6 @@ func extractBinary(archivePath, destDir, goos string) (string, error) {
 	return outPath, extractFromTarGz(archivePath, want, outPath)
 }
 
-// entryIsBinary reports whether an archive entry is the release binary, and
-// refuses absolute paths and ".." components anywhere in the archive.
 func entryIsBinary(name, want string) (bool, error) {
 	name = strings.ReplaceAll(name, `\`, "/")
 	if path.IsAbs(name) || filepath.IsAbs(name) || filepath.VolumeName(name) != "" {
@@ -246,7 +224,6 @@ func extractFromTarGz(archivePath, want, outPath string) error {
 	}
 	defer gz.Close()
 
-	// Bound the decompressed stream too, including entries that are skipped.
 	tr := tar.NewReader(io.LimitReader(gz, 2*maxReleaseArtifactBytes))
 	for {
 		hdr, err := tr.Next()
@@ -315,8 +292,6 @@ func writeBinary(outPath string, r io.Reader) error {
 	return out.Close()
 }
 
-// stageNextTo copies src into a new temp file in dst's directory (so a rename
-// onto dst stays on one filesystem) and returns its path.
 func stageNextTo(src, dst string) (string, error) {
 	in, err := os.Open(src)
 	if err != nil {
@@ -348,7 +323,6 @@ func stageNextTo(src, dst string) (string, error) {
 	return tmp.Name(), nil
 }
 
-// replaceUnix renames a staged copy over the executable in one atomic step.
 func replaceUnix(src, execPath string) error {
 	staged, err := stageNextTo(src, execPath)
 	if err != nil {
@@ -361,9 +335,6 @@ func replaceUnix(src, execPath string) error {
 	return nil
 }
 
-// replaceWindows moves the running executable aside to <exe>.old (Windows
-// allows renaming, not overwriting, a running .exe) and moves the new one into
-// place, restoring the old one if that fails. The next start removes .old.
 func replaceWindows(src, execPath string) error {
 	staged, err := stageNextTo(src, execPath)
 	if err != nil {

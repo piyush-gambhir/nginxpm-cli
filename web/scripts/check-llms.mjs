@@ -1,6 +1,3 @@
-// Verify the built agent Markdown (llms.txt, llms-full.txt, per-page content.md)
-// uses absolute links: agents read these files outside the site, where
-// root-relative links (/docs/...) do not resolve.
 import assert from 'node:assert/strict';
 import { readdir, readFile } from 'node:fs/promises';
 
