@@ -6,7 +6,6 @@ import (
 	"github.com/piyush-gambhir/nginxpm-cli/cli-go/internal/cmdutil"
 )
 
-// NewCmdStream returns the stream parent command.
 func NewCmdStream(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "stream",

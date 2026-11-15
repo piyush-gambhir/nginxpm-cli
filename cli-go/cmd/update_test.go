@@ -23,12 +23,8 @@ import (
 
 const noticeHeadline = "A new version of nginxpm is available"
 
-// updateEnv isolates one test: release build 0.1.9, an interactive stderr,
-// a fake GitHub serving latest (and, when archive is set, its download), a
-// temp config dir, and a stand-in executable.
 type updateEnv struct {
-	checkHits atomic.Int32
-	// checkDelay (nanoseconds) holds back the answer to the release check.
+	checkHits  atomic.Int32
 	checkDelay atomic.Int64
 	configDir  string
 	exe        string
@@ -160,10 +156,10 @@ func TestUpdateNoticeShownOncePerVersion(t *testing.T) {
 
 func TestUpdateNoticeFromFreshCacheNeedsNoWait(t *testing.T) {
 	env := newUpdateEnv(t, "0.1.10", nil)
-	if _, _, err := runRoot(t, "", "update", "--check"); err != nil { // seeds the cache
+	if _, _, err := runRoot(t, "", "update", "--check"); err != nil {
 		t.Fatal(err)
 	}
-	updateNoticeWait = 0 // a cached result must not depend on the wait
+	updateNoticeWait = 0
 	_, stderr, err := runRoot(t, "", "config", "list-profiles")
 	if err != nil {
 		t.Fatal(err)
@@ -190,7 +186,7 @@ func TestUpdateNoticeWaitsForThisRunsCheck(t *testing.T) {
 
 func TestUpdateNoticeWaitIsBounded(t *testing.T) {
 	env := newUpdateEnv(t, "0.1.10", nil)
-	env.checkDelay.Store(int64(2 * time.Second)) // slower than the wait, within the 3s timeout
+	env.checkDelay.Store(int64(2 * time.Second))
 	start := time.Now()
 	_, stderr, err := runRoot(t, "", "config", "list-profiles")
 	if err != nil {
@@ -203,8 +199,6 @@ func TestUpdateNoticeWaitIsBounded(t *testing.T) {
 		t.Fatalf("stderr = %q, want nothing before the answer arrives", stderr)
 	}
 
-	// The attempt is recorded before the request, so the next run neither
-	// asks GitHub again nor waits.
 	start = time.Now()
 	if _, _, err := runRoot(t, "", "config", "list-profiles"); err != nil {
 		t.Fatal(err)
@@ -287,7 +281,6 @@ func TestSkipUpdateCheckCommands(t *testing.T) {
 			t.Errorf("%v: update check not skipped", args)
 		}
 	}
-	// A subcommand that happens to be named update still gets the notice.
 	cmd, _, err := root.Find([]string{"proxy", "update"})
 	if err != nil {
 		t.Fatal(err)
@@ -299,7 +292,7 @@ func TestSkipUpdateCheckCommands(t *testing.T) {
 
 func TestUpdateCheckJSON(t *testing.T) {
 	env := newUpdateEnv(t, "0.1.10", nil)
-	for range 2 { // the second run must query GitHub again, not the cache
+	for range 2 {
 		stdout, _, err := runRoot(t, "", "update", "--check", "-o", "json")
 		if err != nil {
 			t.Fatal(err)

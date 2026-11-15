@@ -41,10 +41,8 @@ var (
 	flagVerbose  bool
 )
 
-// OutputFormat is set during PersistentPreRunE and exported for use by main.go.
 var OutputFormat string
 
-// Execute is the main entry point for the CLI.
 func Execute() error {
 	if goos == "windows" {
 		if exe, err := executablePath(); err == nil {
@@ -54,14 +52,12 @@ func Execute() error {
 	return newRootCmd().Execute()
 }
 
-// loadAndResolveConfig loads the config file and resolves auth from flags/env/config.
 func loadAndResolveConfig(cmd *cobra.Command) (*config.ResolvedConfig, *config.Config, error) {
 	cfg, err := config.Load()
 	if err != nil {
 		return nil, nil, fmt.Errorf("loading config: %w", err)
 	}
 
-	// Determine which profile to use.
 	profileName := flagProfile
 	if profileName == "" {
 		profileName = cfg.CurrentProfile
@@ -77,13 +73,11 @@ func loadAndResolveConfig(cmd *cobra.Command) (*config.ResolvedConfig, *config.C
 		}
 	}
 
-	// Determine output format.
 	output := flagOutput
 	if output == "" {
 		output = cfg.Defaults.Output
 	}
 
-	// Resolve configuration.
 	resolved := config.Resolve(flagURL, flagEmail, flagPassword, flagInsecure, cmd.Flags().Changed("insecure"), profile, cfg.Defaults)
 	if output != "" {
 		resolved.Output = output
@@ -108,7 +102,6 @@ func envFlagEnabled(name string) bool {
 	return strings.EqualFold(v, "true") || v == "1"
 }
 
-// createClient sets up the HTTP client factory on the factory.
 func createClient(ctx context.Context, f *cmdutil.Factory, resolved *config.ResolvedConfig) {
 	f.Client = func() (*client.Client, error) {
 		c, err := client.NewClientContext(ctx, resolved)
@@ -123,18 +116,11 @@ func createClient(ctx context.Context, f *cmdutil.Factory, resolved *config.Reso
 }
 
 var (
-	// stderrIsTerminal is a seam for tests.
 	stderrIsTerminal = func() bool { return term.IsTerminal(int(os.Stderr.Fd())) }
-	// updateNoticeWait is how long PersistentPostRun waits for a release
-	// check that this run started and that has not answered yet, so a fast
-	// command does not lose the day's check. A cached result never waits.
 	updateNoticeWait = time.Second
-	// backgroundChecks lets tests wait for a check that outlived its command.
 	backgroundChecks sync.WaitGroup
 )
 
-// skipUpdateCheck reports whether the background release check must not run
-// for this invocation (no network, no notice).
 func skipUpdateCheck(cmd *cobra.Command) bool {
 	top := cmd
 	for top.HasParent() && top.Parent().HasParent() {
@@ -155,7 +141,6 @@ func newRootCmd() *cobra.Command {
 		IOStreams: cmdutil.DefaultIOStreams(),
 	}
 
-	// Channel-based update check result passing from PersistentPreRun to PersistentPostRun.
 	var updateResult chan *update.UpdateInfo
 
 	rootCmd := &cobra.Command{
@@ -168,7 +153,6 @@ Claude Code skill: https://github.com/piyush-gambhir/nginxpm-cli/blob/main/nginx
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			// Check env vars for --no-input, --quiet, --verbose.
 			if envFlagEnabled("NGINXPM_NO_INPUT") {
 				flagNoInput = true
 			}
@@ -182,15 +166,10 @@ Claude Code skill: https://github.com/piyush-gambhir/nginxpm-cli/blob/main/nginx
 			f.Quiet = flagQuiet
 			f.Verbose = flagVerbose
 
-			// Start the background update check; PersistentPostRun prints
-			// the notice once the result is in.
 			cmdName := cmd.Name()
 			if !skipUpdateCheck(cmd) {
 				result := make(chan *update.UpdateInfo, 1)
 				updateResult = result
-				// A fresh cache is read here (a small local file), so even a
-				// fast command can show a cached notice; only a stale cache
-				// waits on the network in the background.
 				if info, fresh := update.CachedResult(build.Version, config.ConfigDir()); fresh {
 					result <- info
 				} else {
@@ -202,11 +181,9 @@ Claude Code skill: https://github.com/piyush-gambhir/nginxpm-cli/blob/main/nginx
 				}
 			}
 
-			// Skip auth setup for commands that don't need it.
 			if cmdName == "version" || cmdName == "completion" || cmdName == "help" || cmdName == "update" {
 				return nil
 			}
-			// Also skip for config subcommands.
 			if cmd.Parent() != nil && cmd.Parent().Name() == "config" {
 				return nil
 			}
@@ -216,7 +193,6 @@ Claude Code skill: https://github.com/piyush-gambhir/nginxpm-cli/blob/main/nginx
 				return err
 			}
 
-			// Set exported OutputFormat for use by main.go error handler.
 			OutputFormat = resolved.Output
 
 			f.Resolved = resolved
@@ -228,7 +204,6 @@ Claude Code skill: https://github.com/piyush-gambhir/nginxpm-cli/blob/main/nginx
 				return cfg, nil
 			}
 
-			// Skip client creation for commands that handle auth themselves.
 			if cmdName == "login" || cmdName == "status" {
 				return nil
 			}
@@ -241,9 +216,6 @@ Claude Code skill: https://github.com/piyush-gambhir/nginxpm-cli/blob/main/nginx
 			if updateResult == nil {
 				return
 			}
-			// Only a network check started by this run can still be pending
-			// (a cached result is already in the channel). It runs at most
-			// once a day, so waiting briefly for it costs little.
 			var info *update.UpdateInfo
 			select {
 			case info = <-updateResult:
@@ -260,7 +232,6 @@ Claude Code skill: https://github.com/piyush-gambhir/nginxpm-cli/blob/main/nginx
 		},
 	}
 
-	// Global persistent flags.
 	rootCmd.PersistentFlags().StringVarP(&flagOutput, "output", "o", "", "Output format: table, json, yaml")
 	rootCmd.PersistentFlags().StringVar(&flagProfile, "profile", "", "Configuration profile to use")
 	rootCmd.PersistentFlags().StringVar(&flagURL, "url", "", "Nginx Proxy Manager URL")
@@ -272,7 +243,6 @@ Claude Code skill: https://github.com/piyush-gambhir/nginxpm-cli/blob/main/nginx
 	rootCmd.PersistentFlags().BoolVarP(&flagQuiet, "quiet", "q", false, "Suppress informational output")
 	rootCmd.PersistentFlags().BoolVarP(&flagVerbose, "verbose", "v", false, "Enable verbose HTTP logging")
 
-	// Register subcommands.
 	rootCmd.AddCommand(newVersionCmd())
 	rootCmd.AddCommand(newUpdateCmd())
 	rootCmd.AddCommand(newLoginCmd(f))

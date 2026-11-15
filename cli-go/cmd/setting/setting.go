@@ -6,7 +6,6 @@ import (
 	"github.com/piyush-gambhir/nginxpm-cli/cli-go/internal/cmdutil"
 )
 
-// NewCmdSetting returns the setting parent command.
 func NewCmdSetting(f *cmdutil.Factory) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "setting",

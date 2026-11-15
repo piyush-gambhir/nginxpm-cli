@@ -7,16 +7,10 @@ import (
 	"strings"
 )
 
-// Bool is a bool that tolerates the different encodings used by the
-// Nginx Proxy Manager API. NPM releases before v2.12.0 return database
-// boolean columns as JSON numbers (0/1); newer releases return real
-// booleans. Bool accepts true/false, 0/1, "0"/"1"/"true"/"false", and null.
 type Bool bool
 
-// UnmarshalJSON implements json.Unmarshaler.
 func (b *Bool) UnmarshalJSON(data []byte) error {
 	s := strings.TrimSpace(string(data))
-	// Unwrap string-encoded values like "1" or "true".
 	if len(s) >= 2 && s[0] == '"' && s[len(s)-1] == '"' {
 		s = s[1 : len(s)-1]
 	}
@@ -31,14 +25,11 @@ func (b *Bool) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// Response wraps an http.Response with convenience methods.
 type Response struct {
 	HTTPResponse *http.Response
 	RequestURL   string
 }
 
-// JSON reads the response body and unmarshals it into v.
-// It also checks for error status codes.
 func (r *Response) JSON(v interface{}) error {
 	defer r.HTTPResponse.Body.Close()
 
@@ -65,8 +56,6 @@ func (r *Response) JSON(v interface{}) error {
 	return nil
 }
 
-// Error checks if the response indicates an error and returns an APIError.
-// It always closes the response body to prevent leaks.
 func (r *Response) Error() error {
 	defer r.HTTPResponse.Body.Close()
 
@@ -89,21 +78,16 @@ func (r *Response) Error() error {
 	return nil
 }
 
-// StatusCode returns the HTTP status code.
 func (r *Response) StatusCode() int {
 	return r.HTTPResponse.StatusCode
 }
 
-// RawBody reads and returns the raw response body.
 func (r *Response) RawBody() ([]byte, error) {
 	defer r.HTTPResponse.Body.Close()
 	return readAllLimited(r.HTTPResponse.Body)
 }
 
-// extractErrorMessage attempts to extract a meaningful error message from
-// an NPM error response body.
 func extractErrorMessage(body []byte) string {
-	// NPM errors: {"error":{"code":400,"message":"..."}}
 	var npmErr struct {
 		Error struct {
 			Code    int    `json:"code"`
@@ -114,7 +98,6 @@ func extractErrorMessage(body []byte) string {
 		return npmErr.Error.Message
 	}
 
-	// Try simple message field: {"message":"..."}
 	var msgErr struct {
 		Message string `json:"message"`
 	}
@@ -122,7 +105,6 @@ func extractErrorMessage(body []byte) string {
 		return msgErr.Message
 	}
 
-	// Try simple string error: {"error":"..."}
 	var simpleErr struct {
 		Error string `json:"error"`
 	}
@@ -130,7 +112,6 @@ func extractErrorMessage(body []byte) string {
 		return simpleErr.Error
 	}
 
-	// Fall back to raw body.
 	msg := string(body)
 	if len(msg) > 200 {
 		msg = msg[:200] + "..."

@@ -18,8 +18,6 @@ import (
 	"github.com/piyush-gambhir/nginxpm-cli/cli-go/internal/update"
 )
 
-// Seams for tests: the target platform, the executable being replaced, and
-// whether stdin can answer a prompt.
 var (
 	goos            = runtime.GOOS
 	goarch          = runtime.GOARCH
@@ -27,7 +25,6 @@ var (
 	stdinIsTerminal = func() bool { return term.IsTerminal(int(os.Stdin.Fd())) }
 )
 
-// updateCheckResult is the `update --check -o json|yaml` payload.
 type updateCheckResult struct {
 	CurrentVersion  string `json:"current_version" yaml:"current_version"`
 	LatestVersion   string `json:"latest_version" yaml:"latest_version"`
@@ -144,15 +141,11 @@ func runUpdate(cmd *cobra.Command, checkOnly, yes bool) error {
 	if err := installer.Install(cmd.Context(), info.LatestVersion); err != nil {
 		return err
 	}
-	// The cache already holds this release (CheckForUpdateFresh stored it),
-	// so the notifier agrees that nothing newer is out.
 	fmt.Fprintf(out, "Updated nginxpm v%s -> v%s\n", trimV(current), info.LatestVersion)
 	fmt.Fprintf(out, "Release notes: %s\n", info.ReleaseURL)
 	return nil
 }
 
-// checkUpdateAllowed applies read-only mode (flag, NGINXPM_READ_ONLY, or the
-// profile's read_only) to installing; `update --check` is always allowed.
 func checkUpdateAllowed(cmd *cobra.Command) error {
 	readOnly := flagReadOnly || envFlagEnabled("NGINXPM_READ_ONLY")
 	if resolved, _, err := loadAndResolveConfig(cmd); err == nil && resolved.ReadOnly {
@@ -189,8 +182,6 @@ func printUpdateCheck(w io.Writer, format string, info *update.UpdateInfo, goIns
 	return nil
 }
 
-// currentExecutable is the running binary with symlinks resolved, so the
-// update replaces the real file rather than a link to it.
 func currentExecutable() (string, error) {
 	exe, err := os.Executable()
 	if err != nil {
