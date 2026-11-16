@@ -47,7 +47,7 @@
     "postcss": "^8.5.32",
     "tailwindcss": "^4.3.5",
     "typescript": "^7.0.2",
-    "wrangler": "4.161.0",
+    "wrangler": "4.162.0",
     "http-server": "14.1.1"
   },
   "packageManager": "pnpm@12.15.0",
