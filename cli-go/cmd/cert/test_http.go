@@ -2,10 +2,12 @@ package cert
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 
 	"github.com/piyush-gambhir/nginxpm-cli/cli-go/internal/cmdutil"
+	"github.com/piyush-gambhir/nginxpm-cli/cli-go/internal/output"
 )
 
 func newCmdCertTestHTTP(f *cmdutil.Factory) *cobra.Command {
@@ -13,6 +15,10 @@ func newCmdCertTestHTTP(f *cmdutil.Factory) *cobra.Command {
 		Use:   "test-http <domain> [domain...]",
 		Short: "Test HTTP reachability for domains",
 		Long: `Test HTTP reachability for one or more domain names.
+
+The server reports a result per domain: ok, no-host, 404, wrong-data, failed,
+or other:<detail>. The command exits non-zero and names each domain whose
+result is not ok. With -o json or -o yaml it prints the per-domain results.
 
 Examples:
   # Test a single domain
@@ -31,11 +37,30 @@ Examples:
 				return err
 			}
 
-			if err := c.TestHTTP(cmd.Context(), body); err != nil {
+			results, err := c.TestHTTP(cmd.Context(), body)
+			if err != nil {
 				return err
 			}
 
-			if !f.Quiet {
+			var failed []string
+			for _, domain := range args {
+				if result := results[domain]; result != "ok" {
+					if result == "" {
+						result = "no result"
+					}
+					failed = append(failed, fmt.Sprintf("%s (%s)", domain, result))
+				}
+			}
+
+			if f.Resolved.Output != "table" {
+				if err := output.Print(f.IOStreams.Out, f.Resolved.Output, results, nil); err != nil {
+					return err
+				}
+			}
+			if len(failed) > 0 {
+				return fmt.Errorf("HTTP reachability test failed: %s", strings.Join(failed, ", "))
+			}
+			if !f.Quiet && f.Resolved.Output == "table" {
 				fmt.Fprintln(f.IOStreams.Out, "HTTP reachability test passed.")
 			}
 			return nil
