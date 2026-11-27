@@ -302,7 +302,7 @@ nginxpm cert test-http <domain> [domain...]
 - `delete <id>`: delete (confirmation required unless `--confirm`).
 - `renew <id>`: renew a Let's Encrypt certificate.
 - `dns-providers`: list available DNS challenge providers (always emits JSON regardless of `-o`).
-- `test-http <domain> [domain...]`: test HTTP reachability for one or more domains before issuing a cert. Prints `HTTP reachability test passed.` on success.
+- `test-http <domain> [domain...]`: test HTTP reachability for one or more domains before issuing a cert. Prints `HTTP reachability test passed.` when every domain's result is `ok`; otherwise exits 1 and names each failing domain with its result (`no-host`, `404`, `wrong-data`, `failed`, or `other:<detail>`). `-o json` prints the per-domain results as an object.
 
 Example:
 
@@ -382,7 +382,7 @@ nginxpm audit list
 nginxpm audit get <id>
 ```
 
-- `list` columns: ID, DATE, USER ID, ACTION, OBJECT TYPE, OBJECT ID. Read-only (no create/update/delete).
+- `list` columns: ID, DATE, USER ID, ACTION, OBJECT TYPE, OBJECT ID. Read-only (no create/update/delete). The server returns at most the 100 newest entries; when exactly 100 come back, a note on stderr says older entries may exist (fetch them with `audit get <id>`).
 
 Example:
 
@@ -420,7 +420,7 @@ nginxpm config use-profile <name>
 nginxpm config list-profiles
 ```
 
-- `view`: print the current config file as YAML.
+- `view`: print the current config file as YAML, with saved passwords masked as `****`.
 - `set <key> <value>`: set a config value. Supported keys:
   - `defaults.output`, default output format; value must be `table`, `json`, or `yaml`.
   - `current_profile`, name of the active profile (must already exist).
@@ -494,7 +494,7 @@ Choose with `-o` / `--output` (or the `defaults.output` config key). Supported v
 
 - `table` (default): aligned, human-readable columns. Headers are uppercased. For commands that render full objects without a table definition (e.g. `dead get`), table falls back to JSON.
 - `json`: pretty-printed (2-space indented) JSON. **Best for scripting and agents**, stable, parseable, pipe to `jq`.
-- `yaml`: YAML serialization of the same data.
+- `yaml`: YAML serialization of the same data. Keys match the JSON field names.
 
 Note: `cert dns-providers` always outputs JSON regardless of `-o`. Confirmation prompts and "created/updated/deleted" notices go to stdout as plain text unless `--quiet`.
 
@@ -508,7 +508,7 @@ nginxpm proxy list -o json | jq '.[] | {id, domain_names, enabled}'
 
 - **Location:** `~/.config/nginxpm-cli/config.yaml` (or `$XDG_CONFIG_HOME/nginxpm-cli/config.yaml`). Written with `0600` perms.
 - **Format:** YAML with three top-level keys: `current_profile` (string), `profiles` (map of name → profile), and `defaults` (with `output`).
-- **Profile fields:** `url`, `email`, `password`, `insecure` (bool).
+- **Profile fields:** `url`, `email`, `password`, `insecure` (bool), `read_only` (bool).
 
 Example `config.yaml`:
 
@@ -531,7 +531,7 @@ defaults:
 
 How profiles work:
 
-- `nginxpm login` creates/overwrites a profile and sets it as `current_profile`.
+- `nginxpm login` creates a profile, or updates an existing one while keeping its `read_only` setting, and sets it as `current_profile`.
 - `nginxpm config use-profile <name>` (or `config set current_profile <name>`) switches the active profile.
 - `--profile <name>` selects a profile for a single command, overriding `current_profile`.
 - Flags and env vars still override individual profile fields per the resolution order above.

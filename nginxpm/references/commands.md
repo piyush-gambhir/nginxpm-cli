@@ -79,7 +79,7 @@ Quick reference of all commands. For full details, see `CLAUDE.md` or run `nginx
 | `nginxpm cert delete <id>` | Delete a certificate (`--confirm`) |
 | `nginxpm cert renew <id>` | Renew a Let's Encrypt certificate |
 | `nginxpm cert dns-providers` | List available DNS challenge providers |
-| `nginxpm cert test-http <domain> [domain...]` | Test HTTP reachability for domains |
+| `nginxpm cert test-http <domain> [domain...]` | Test HTTP reachability for domains; exits 1 unless every domain reports `ok` (`failed` can mean NPM could not reach its outside checking service) |
 
 ## `nginxpm access` (aliases: `access-list`, `acl`) -- Manage access lists
 

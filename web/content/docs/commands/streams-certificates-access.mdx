@@ -29,7 +29,7 @@ nginxpm cert test-http example.com www.example.com
 nginxpm cert delete 1 --confirm
 ```
 
-`renew` is for Let's Encrypt certificates. `dns-providers` always emits JSON,
+`cert test-http` exits 1 unless every domain reports `ok`; a `failed` result can mean NPM could not reach its outside checking service. `renew` is for Let's Encrypt certificates. `dns-providers` always emits JSON,
 regardless of the global output setting. Aliases for `cert` are `certificate`,
 `certificates`, and `ssl`.
 

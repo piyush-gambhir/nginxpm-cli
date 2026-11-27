@@ -1,6 +1,7 @@
 package output
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 
@@ -10,7 +11,17 @@ import (
 type YAMLFormatter struct{}
 
 func (f *YAMLFormatter) Format(w io.Writer, data interface{}, _ *TableDef) error {
-	out, err := yaml.Marshal(data)
+	jsonBytes, err := json.Marshal(data)
+	if err != nil {
+		return fmt.Errorf("marshaling YAML: %w", err)
+	}
+
+	var normalized interface{}
+	if err := yaml.Unmarshal(jsonBytes, &normalized); err != nil {
+		return fmt.Errorf("marshaling YAML: %w", err)
+	}
+
+	out, err := yaml.Marshal(normalized)
 	if err != nil {
 		return fmt.Errorf("marshaling YAML: %w", err)
 	}

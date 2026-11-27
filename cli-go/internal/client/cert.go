@@ -4,7 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 )
+
+const certbotTimeout = 15 * time.Minute
+
+const testHTTPTimeout = 65 * time.Second
 
 type Certificate struct {
 	ID          int                    `json:"id"`
@@ -43,7 +48,7 @@ func (c *Client) GetCertificate(ctx context.Context, id int) (*Certificate, erro
 }
 
 func (c *Client) CreateCertificate(ctx context.Context, body interface{}) (*Certificate, error) {
-	resp, err := c.Post(ctx, "/api/nginx/certificates", body)
+	resp, err := c.withTimeout(certbotTimeout).Post(ctx, "/api/nginx/certificates", body)
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +68,7 @@ func (c *Client) DeleteCertificate(ctx context.Context, id int) error {
 }
 
 func (c *Client) RenewCertificate(ctx context.Context, id int) error {
-	resp, err := c.Post(ctx, fmt.Sprintf("/api/nginx/certificates/%d/renew", id), nil)
+	resp, err := c.withTimeout(certbotTimeout).Post(ctx, fmt.Sprintf("/api/nginx/certificates/%d/renew", id), nil)
 	if err != nil {
 		return err
 	}
@@ -82,10 +87,14 @@ func (c *Client) ListDNSProviders(ctx context.Context) (json.RawMessage, error) 
 	return providers, nil
 }
 
-func (c *Client) TestHTTP(ctx context.Context, body interface{}) error {
-	resp, err := c.Post(ctx, "/api/nginx/certificates/test-http", body)
+func (c *Client) TestHTTP(ctx context.Context, body interface{}) (map[string]string, error) {
+	resp, err := c.withTimeout(testHTTPTimeout).Post(ctx, "/api/nginx/certificates/test-http", body)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return resp.Error()
+	var results map[string]string
+	if err := resp.JSON(&results); err != nil {
+		return nil, err
+	}
+	return results, nil
 }

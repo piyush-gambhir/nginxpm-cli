@@ -106,6 +106,7 @@ Examples:
 			}
 
 			if err := config.Update(func(cfg *config.Config) error {
+				profile.ReadOnly = cfg.Profiles[profileName].ReadOnly
 				cfg.Profiles[profileName] = profile
 				cfg.CurrentProfile = profileName
 				return nil

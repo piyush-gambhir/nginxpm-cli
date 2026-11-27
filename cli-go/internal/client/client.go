@@ -218,6 +218,14 @@ func (c *Client) doNoAuth(ctx context.Context, method, path string, body interfa
 	return &Response{HTTPResponse: resp, RequestURL: url}, nil
 }
 
+func (c *Client) withTimeout(d time.Duration) *Client {
+	hc := *c.HTTPClient
+	hc.Timeout = d
+	cc := *c
+	cc.HTTPClient = &hc
+	return &cc
+}
+
 func (c *Client) setAuth(req *http.Request) {
 	if c.Token != "" {
 		req.Header.Set("Authorization", "Bearer "+c.Token)

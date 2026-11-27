@@ -29,11 +29,18 @@ func newCmdConfigView(f *cmdutil.Factory) *cobra.Command {
 	return &cobra.Command{
 		Use:   "view",
 		Short: "Display the current configuration",
+		Long:  "Display the configuration file as YAML. Saved passwords are masked.",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := config.Load()
 			if err != nil {
 				return err
+			}
+			for name, p := range cfg.Profiles {
+				if p.Password != "" {
+					p.Password = "****"
+					cfg.Profiles[name] = p
+				}
 			}
 
 			data, err := yaml.Marshal(cfg)

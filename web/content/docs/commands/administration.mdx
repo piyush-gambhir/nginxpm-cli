@@ -64,8 +64,8 @@ Shell completion is available for `bash`, `zsh`, `fish`, and `powershell`.
 
 <Callout type="warn">
   User, permission, password, and setting changes mutate the server. Use
-  `--read-only` for inspection-only sessions, and treat `config view` output as
-  sensitive because saved profiles contain connection credentials.
+  `--read-only` for inspection-only sessions. `config view` masks saved
+  passwords, but the config file itself stores them in plain text.
 </Callout>
 
 Return to the [command overview](/docs/commands), or review

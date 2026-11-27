@@ -286,7 +286,7 @@ nginxpm config use-profile staging
 
 | Command | Description |
 |---------|-------------|
-| `nginxpm config view` | Display the current configuration |
+| `nginxpm config view` | Display the current configuration (saved passwords masked) |
 | `nginxpm config set <key> <value>` | Set a configuration value (defaults.output, current_profile) |
 | `nginxpm config use-profile <name>` | Switch to a different profile |
 | `nginxpm config list-profiles` | List all configured profiles |
@@ -349,7 +349,7 @@ nginxpm config use-profile staging
 | `nginxpm cert delete <id>` | Delete a certificate (--confirm) |
 | `nginxpm cert renew <id>` | Renew a Let's Encrypt certificate |
 | `nginxpm cert dns-providers` | List available DNS challenge providers |
-| `nginxpm cert test-http <domain> [domain...]` | Test HTTP reachability for domains |
+| `nginxpm cert test-http <domain> [domain...]` | Test HTTP reachability for domains; exits 1 unless every domain reports `ok` (`failed` can mean NPM could not reach its outside checking service) |
 
 ### `nginxpm access` (aliases: `access-list`, `acl`) -- Manage access lists
 
@@ -378,7 +378,7 @@ nginxpm config use-profile staging
 
 | Command | Description |
 |---------|-------------|
-| `nginxpm audit list` (alias: `ls`) | List all audit log entries |
+| `nginxpm audit list` (alias: `ls`) | List the 100 most recent audit log entries (the server's cap) |
 | `nginxpm audit get <id>` | Get a specific audit log entry |
 
 ### `nginxpm setting` (alias: `settings`) -- Manage server settings
